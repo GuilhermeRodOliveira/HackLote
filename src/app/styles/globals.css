@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+main {
+  padding-top: 100px; /* compensa o header fixo */
+}
+
+.sublinha-header {
+  @apply text-3xl md:text-5xl font-extrabold text-white mb-4;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Melhor renderização e base clean */
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #0f0f1a;
+  /* fallback seguro */
+  color: rgb(255, 255, 255);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remover estilos inesperados */
+* {
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+}
+
+/* Corrigir botões, links etc */
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Scrollbar custom (opcional) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f0eded;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.LandingPage.navbar{
+   font-size: 36px;
+  text-align: center;
+}
+
+.container {
+  margin-top: 100px; /* desce o conteúdo para não ficar atrás da navbar */
+  width: 420px;
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: white;
+  padding: 20px 40px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(120px);
+  margin-top: 100px;
+}
