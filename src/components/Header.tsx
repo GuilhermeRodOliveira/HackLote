@@ -1,13 +1,15 @@
+// src/components/Header.tsx
 'use client';
 
 import { Search, Bell, MessageSquare, Repeat } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import NavBar from './NavBar'; // Importa o componente NavBar
 
 export default function Header() {
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-[#0f0f1a] text-white shadow-lg">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-[80px]">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-10 h-[80px]"> 
         
         {/* Esquerda: Logo */}
         <div className="flex-shrink-0">
@@ -22,22 +24,15 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Centro: Navegação */}
-        <nav className="flex-1 flex justify-center space-x-10 text-sm font-semibold text-white">
-          <Link href="/login" className="hover:text-white transition">Login</Link>
-          <Link href="/accounts" className="hover:text-white transition">Accounts</Link>
-          <Link href="/top-up" className="hover:text-white transition">Top Up</Link>
-          <Link href="/items" className="hover:text-white transition">Items</Link>
-          <Link href="/boosting" className="hover:text-white transition">Boosting</Link>
-        </nav>
+        {/* Centro: Navegação (o NavBar que contém os links) */}
+        <NavBar /> 
 
         {/* Direita: Ícones */}
-        <div className="flex items-center gap-4 text-white">
-          <Repeat size={40} className="hover:text-white cursor-pointer" />
-          <MessageSquare size={40} className="hover:text-white cursor-pointer" />
+        <div className="flex items-center gap-6 text-white"> 
+          <Repeat size={40} className="hover:text-gray-300 cursor-pointer" /> 
+          <MessageSquare size={40} className="hover:text-gray-300 cursor-pointer" />
           <div className="relative">
-            <Bell size={40} className="hover:text-white cursor-pointer" />
-            {/* O span do contador de notificação continua amarelo */}
+            <Bell size={40} className="hover:text-gray-300 cursor-pointer" />
             <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-black text-[10px] px-1.5 py-[1px] rounded-full" />
           </div>
           <div className="w-9 h-9 rounded-full border-2 border-yellow-300 overflow-hidden">

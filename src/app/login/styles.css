@@ -1,3 +1,7 @@
+/* src/app/login/styles.css */
+
+/* Mantenha os imports de fontes e ícones se forem usados apenas aqui,
+   ou mova para globals.css se forem globais */
 @import url('https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
@@ -8,26 +12,21 @@
   font-family: "Poppins", sans-serif;
 }
 
-body {
+/* NOVA CLASSE para o background e centralização APENAS desta página */
+.login-page-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: url('/img/img.jpg') no-repeat center center;
+  background: url('/img/img.jpg') no-repeat center center; /* Este é o background da imagem */
   background-size: cover;
 }
 
+/* REMOVA a definição de .container daqui. Ela virá do globals.css */
+/* REMOVA a definição de body aqui. Ela virá do globals.css ou da nova classe acima */
 
-.container {
-  width: 420px;
-  background-color: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  color: white;
-  padding: 20px 40px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(120px);
-}
+/* Estilos específicos do formulário de login */
+/* (Mantenha apenas os estilos para classes que são exclusivas ou modificações específicas aqui) */
 
 .container h1 {
   font-size: 36px;
@@ -66,58 +65,59 @@ body {
 }
 
 .remember-forgot {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .remember-forgot label input {
-    accent-color: white;
-    margin-right: 5px;
-    margin: -15px 0 15px;
+  accent-color: white;
+  margin-right: 5px;
+  margin: -15px 0 15px;
 }
 
 .remember-forgot a {
-    text-decoration: none;
-    color: white;
+  text-decoration: none;
+  color: white;
 }
 
 .remember-forgot a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
-.login {
-    width: 100%;
-    height: 50px;
-    background-color: white;
-    border: none;
-    border-radius: 40px;
-    cursor: pointer;
-    font-size: 16px;
-    color: black;
-    font-weight: 600;
-    box-shadow:  0 0 10px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
+/* Classe renomeada para 'login-button' para evitar conflito com 'login' em geral */
+.login-button { 
+  width: 100%;
+  height: 50px;
+  background-color: white;
+  border: none;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 16px;
+  color: black;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
 }
 
-.login:hover {
-    background-color: transparent;
-    border: 2px solid rgba(255, 255, 255, .2);
-    color: white;
-    transition: 0.5s;
+.login-button:hover { /* Use a nova classe aqui também */
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, .2);
+  color: white;
+  transition: 0.5s;
 }
 
 .register-link{
-    font-size: 14px;
-    text-align: center;
-    margin: 20px 0 15px;
+  font-size: 14px;
+  text-align: center;
+  margin: 20px 0 15px;
 }
 
 .register-link a{
-    text-decoration: none;
-    color: white;
-    font-weight: 500;
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
 }
 
 .register-link a:hover{
-    text-decoration: underline;
+  text-decoration: underline;
 }
