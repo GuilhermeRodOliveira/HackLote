@@ -14,7 +14,7 @@ type ProductCardProps = {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   return (
-    <div className="bg-[#1c1f2e] text-white rounded-xl shadow-lg p-5 max-w-sm mx-auto my-4 transition duration-300 hover:scale-105 hover:shadow-yellow-400/20 border border-yellow-400/10">
+    <div className="bg-[#1c1f2e] border border-purple-500 rounded-2xl p-6 shadow-[0_0_12px_#a855f7] max-w-[480px] w-full mx-auto">
       <Image
         src={product.image}
         alt={product.name}

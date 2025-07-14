@@ -1,36 +1,45 @@
 /* src/app/globals.css */
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
 @tailwind base;
-
 @tailwind components;
-
 @tailwind utilities;
 
+
+.with-sidebar {
+  padding-left: 85px;
+}
+
+
+
 main {
-  padding-top: 100px;
+  padding-top: 80px;
+  padding-left: 100px;
+  padding-right: 100px;
 }
 
-.sublinha-header {
-  /* <<-- AGORA O @apply ESTÁ DENTRO DA REGRA! */
-  @apply text-3xl md:text-5xl font-extrabold text-white mb-4; 
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); /* Use rgba para clareza */
-}
-
-/* Melhor renderização e base clean */
-html, body {
+body {
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
+  background-color: #0d0f25;
   color: #fff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0f0f1a;
   margin: 0;
   padding: 0;
-  font-family: 'Inter', sans-serif;
+}
+
+html {
+  margin: 0;
+  padding: 0;
 }
 
 * {
   box-sizing: border-box;
-  border: none;
   outline: none;
 }
+
 
 button {
   cursor: pointer;
@@ -57,11 +66,85 @@ a {
 .container {
   color: #eee;
   backdrop-filter: blur(120px);
-  background-color: transparent; /* Alterei para transparent conforme seu código anterior, #0000 é transparente mas menos explícito */
+  background-color: transparent;
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   width: 420px;
   margin-top: 100px;
   padding: 20px 40px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Use rgba para clareza */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.Sidebar {
+  border: 5px solid black;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  outline: none;
+}
+
+
+.sublinha-header {
+  @apply text-3xl md:text-5xl font-extrabold text-white mb-4;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.open-menu,
+.close-menu {
+  font-size: 2rem;
+  color: #000000;
+  cursor: pointer;
+}
+
+.btn-menu {
+  background: transparent;
+}
+
+.boost-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: #161a22;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  max-width: 500px;
+  margin: 0 auto;
+  color: white;
+}
+
+.input {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background: #0d1117;
+  color: white;
+  border: 1px solid #333;
+}
+
+.submit-button {
+  padding: 0.75rem;
+  background-color: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #6b21a8;
 }

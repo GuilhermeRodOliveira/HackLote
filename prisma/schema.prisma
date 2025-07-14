@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  nome           String?      // <- opcional
+  usuario        String?      @unique
+  email          String       @unique
+  password       String
+
+  boostRequests  BoostRequest[]  
+  boostBids      BoostBid[]      
+}
+
+
+model BoostRequest {
+  id              String       @id @default(uuid())
+  user            User         @relation(fields: [userId], references: [id])
+  userId          String
+  game            String
+  currentRank     String
+  desiredRank     String
+  description     String?
+  createdAt       DateTime     @default(now())
+
+  bids            BoostBid[]
+
+  acceptedBidId   String?      @unique
+  acceptedBid     BoostBid?    @relation("AcceptedBidRelation", fields: [acceptedBidId], references: [id])
+}
+
+
+model BoostBid {
+  id              String        @id @default(uuid())
+  booster         User          @relation(fields: [boosterId], references: [id])
+  boosterId       String
+
+  boostRequest    BoostRequest  @relation(fields: [boostRequestId], references: [id])
+  boostRequestId  String
+
+  amount          Float
+  estimatedTime   String
+  createdAt       DateTime      @default(now())
+
+  acceptedBy      BoostRequest? @relation("AcceptedBidRelation")
+}

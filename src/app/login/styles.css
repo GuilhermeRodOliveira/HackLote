@@ -1,7 +1,4 @@
-/* src/app/login/styles.css */
-
-/* Mantenha os imports de fontes e ícones se forem usados apenas aqui,
-   ou mova para globals.css se forem globais */
+/* IMPORTAÇÕES DE FONTES E ÍCONES */
 @import url('https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
@@ -12,22 +9,21 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* NOVA CLASSE para o background e centralização APENAS desta página */
+/* -------------------------
+   LOGIN PAGE BACKGROUND
+-------------------------- */
 .login-page-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: url('/img/img.jpg') no-repeat center center; /* Este é o background da imagem */
+  background: url('/img/img.jpg') no-repeat center center;
   background-size: cover;
 }
 
-/* REMOVA a definição de .container daqui. Ela virá do globals.css */
-/* REMOVA a definição de body aqui. Ela virá do globals.css ou da nova classe acima */
-
-/* Estilos específicos do formulário de login */
-/* (Mantenha apenas os estilos para classes que são exclusivas ou modificações específicas aqui) */
-
+/* -------------------------
+   LOGIN FORM ESTILOS
+-------------------------- */
 .container h1 {
   font-size: 36px;
   text-align: center;
@@ -62,17 +58,21 @@
   font-size: 20px;
   top: 50%;
   transform: translateY(-50%);
+  color: white;
 }
 
+/* LEMBRAR SENHA */
 .remember-forgot {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: white;
 }
 
 .remember-forgot label input {
   accent-color: white;
   margin-right: 5px;
-  margin: -15px 0 15px;
 }
 
 .remember-forgot a {
@@ -84,8 +84,8 @@
   text-decoration: underline;
 }
 
-/* Classe renomeada para 'login-button' para evitar conflito com 'login' em geral */
-.login-button { 
+/* BOTÃO LOGIN */
+.login-button {
   width: 100%;
   height: 50px;
   background-color: white;
@@ -97,27 +97,69 @@
   font-weight: 600;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-top: 20px;
+  transition: 0.5s ease;
 }
 
-.login-button:hover { /* Use a nova classe aqui também */
+.login-button:hover {
   background-color: transparent;
-  border: 2px solid rgba(255, 255, 255, .2);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   color: white;
-  transition: 0.5s;
 }
 
-.register-link{
+/* LINK PARA CADASTRO */
+.register-link {
   font-size: 14px;
   text-align: center;
   margin: 20px 0 15px;
+  color: white;
 }
 
-.register-link a{
+.register-link a {
   text-decoration: none;
   color: white;
   font-weight: 500;
 }
 
-.register-link a:hover{
+.register-link a:hover {
   text-decoration: underline;
+}
+
+/* -------------------------
+   SIDEBAR FIXES & MELHORIAS
+-------------------------- */
+
+/* Quando sidebar estiver recolhida */
+.sidebar:not(:hover) .submenu-items {
+  display: none;
+}
+
+.sidebar:not(:hover) .sidebar-links li a,
+.sidebar:not(:hover) .submenu-trigger {
+  color: #bbbbbb;
+  justify-content: center;
+  padding: 12px;
+}
+
+.sidebar:not(:hover) .sidebar-links li a span,
+.sidebar:not(:hover) .submenu-trigger span {
+  margin-right: 0;
+}
+
+/* Estilo base para submenu trigger (Pedidos) */
+.submenu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: #dbd4d4e3;
+  font-weight: 500;
+  padding: 15px 20px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.sidebar:hover .submenu-trigger:hover {
+  background: #ffffff2d;
+  color: white;
+  border-radius: 4px;
 }

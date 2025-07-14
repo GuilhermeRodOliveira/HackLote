@@ -1,21 +1,83 @@
-// src/app/page.tsx  <--- AGORA ESTE ARQUIVO ESTÁ CERTO
+'use client';
 
-'use client'; // Mantenha isso se a sua página inicial tiver qualquer interatividade (useState, useEffect, etc.)
+import CategoryCard from '@/components/CategoryCard/CategoryCard';
 
-// REMOVIDOS:
-// import Header from '../components/Header'; // O Header é importado e renderizado no src/app/layout.tsx
-// import './globals.css'; // O CSS global é importado no src/app/layout.tsx
+export default function Page() {
+  const sections = [
+    {
+      title: '🛡️ Boosting',
+      description: 'Suba de elo com segurança',
+      items: [
+        {
+          title: 'Valorant',
+          icon: '/img/valorant.png',
+        },
+        {
+          title: 'League of Legends',
+          icon: '/img/lol.png',
+        },
+        {
+          title: 'GTA V',
+          icon: '/img/gta.png',
+        },
+        {
+          title: 'CS2',
+          icon: '/img/cs2.png',
+        },
+        {
+          title: 'Fortnite',
+          icon: '/img/fortnite.png',
+        },
+        {
+          title: 'Rainbow Six',
+          icon: '/img/r6.png',
+        },
+      ],
+    },
+    {
+      title: '🛒 Marketplace',
+      items: [
+        {
+          title: 'Skins',
+          icon: '/img/cs2.png',
+        },
+        {
+          title: 'Contas de Jogo',
+          icon: '/img/gta.png',
+        },
+        {
+          title: 'Boosts',
+          icon: '/img/valorant.png',
+        },
+        {
+          title: 'Gift Cards',
+          icon: '/img/fortnite.png',
+        },
+      ],
+    },
+  ];
 
-export default function HomePage() { // Renomeado de RootLayout para HomePage, pois é uma página, não um layout
   return (
-    // Removidas as tags <html> e <body> porque elas já são definidas no src/app/layout.tsx
-    // O children não é necessário aqui, pois esta é a página raiz que será o 'children' do layout.
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] text-center text-white">
-      {/* O Tailwind CSS e o fundo escuro do body virão do globals.css via layout.tsx */}
-      {/* O padding-top para compensar o header fixo já está no globals.css e se aplicará a este <main> */}
-      <h1 className="text-4xl font-bold mb-4">Bem-vindo à Página Principal!</h1>
-      <p className="text-lg">Este é o conteúdo da sua rota de índice (`/`).</p>
-      <p className="mt-4">O cabeçalho e os estilos globais são gerenciados pelo seu layout principal.</p>
-    </div>
+    <main className="pt-24 px-6 pl-[85px] min-h-screen bg-[#0d0f1a]">
+      <h1 className="text-3xl font-bold mb-6">
+        Bem-vindo à <span className="text-orange-400">Hack Lote</span>!
+      </h1>
+
+      <section className="flex flex-wrap justify-center gap-6">
+        {sections.map((section, index) => (
+          <CategoryCard key={index} title={section.title} items={section.items} />
+        ))}
+      </section>
+
+      {/* Últimas Atualizações */}
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold mb-4 text-purple-400">📢 Últimas Atualizações</h2>
+        <div className="bg-[#161a35] p-6 rounded-xl shadow-lg">
+          <p className="text-gray-300">
+            Nada novo por enquanto... mas grandes coisas estão chegando! 🚀
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }
