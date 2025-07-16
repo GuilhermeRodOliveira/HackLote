@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'; // Certifique-se de que Link está importado
 
-type BoostRequest = {
+interface BoostRequest {
   id: string;
   game: string;
   currentRank: string;
@@ -13,7 +13,7 @@ type BoostRequest = {
   user: {
     email: string;
   };
-};
+}
 
 export default function MatchesPage() {
   const [boostRequests, setBoostRequests] = useState<BoostRequest[]>([]);
@@ -22,9 +22,9 @@ export default function MatchesPage() {
   useEffect(() => {
     const fetchBoostRequests = async () => {
       try {
-        const res = await fetch('/api/boostrequest');
+        const res = await fetch('/api/boostrequest'); // Assumindo que este endpoint existe
         const data = await res.json();
-        setBoostRequests(data);
+        setBoostRequests(data); 
       } catch (error) {
         console.error('Erro ao buscar os pedidos de boost:', error);
       } finally {
@@ -36,24 +36,36 @@ export default function MatchesPage() {
   }, []);
 
   return (
-    <main className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">Pedidos de Boost</h1>
+    <div className="max-w-7xl mx-auto py-8">
+      <div className="flex justify-between items-center mb-6"> {/* Adicionado um div para alinhar título e botão */}
+        <h1 className="text-3xl font-bold">Pedidos de Boost</h1> {/* Aumentado o tamanho do título */}
+        {/* NOVO BOTÃO AQUI */}
+        <Link href="/boosting/settings">
+          <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+            Inscrição para ser Booster
+          </button>
+        </Link>
+      </div>
 
       {isLoading ? (
-        <p>Carregando...</p>
+        <div className="content-box text-center text-gray-400 text-lg py-8">
+          Carregando pedidos...
+        </div>
       ) : boostRequests.length === 0 ? (
-        <p>Nenhum pedido encontrado.</p>
+        <div className="content-box text-center text-gray-400 text-lg py-8">
+          Nenhum pedido de boost disponível.
+        </div>
       ) : (
         <ul className="space-y-4">
           {boostRequests.map((request) => (
             <li
               key={request.id}
-              className="bg-[#1f1f1f] p-4 rounded-lg border border-gray-700 hover:border-purple-500 transition"
+              className="content-box"
             >
               <p><strong>Jogo:</strong> {request.game}</p>
               <p><strong>Rank Atual:</strong> {request.currentRank}</p>
               <p><strong>Rank Desejado:</strong> {request.desiredRank}</p>
-              <p><strong>Usuário:</strong> {request.user.email}</p>
+              <p><strong>Usuário:</strong> {request.user.email}</p> 
               <p><strong>Data:</strong> {new Date(request.createdAt).toLocaleString()}</p>
 
               <div className="mt-3">
@@ -68,6 +80,6 @@ export default function MatchesPage() {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

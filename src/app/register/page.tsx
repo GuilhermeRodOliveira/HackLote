@@ -1,30 +1,86 @@
 'use client';
 
 import './styles.css';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
+
+// Lista de domínios de e-mail permitidos (mesma lista do backend)
+const ALLOWED_EMAIL_DOMAINS = [
+  'gmail.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'yahoo.com',
+  'aol.com',
+  'icloud.com',
+  'protonmail.com',
+  'zoho.com',
+];
+
+// Lista de domínios de e-mail temporários conhecidos (mesma lista do backend)
+const TEMPORARY_EMAIL_DOMAINS = [
+  'mailinator.com', 'temp-mail.org', '10minutemail.com', 'guerrillamail.com',
+  'mail.tm', 'yopmail.com', 'disposablemail.com', 'trash-mail.com',
+  'fakemail.com', 'tempmail.com', 'tempmail.dev',
+  'signinid.com', 'jxbav.com', 'uorak.com', 'letterprotect.net',
+  'vugitublo.com', 'mailshan.com', 'nesopf.com',
+];
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [nome, setNome] = useState('');
   const [usuario, setUsuario] = useState('');
   const [email, setEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
+    // Validação de campos vazios
+    if (!nome || !usuario || !email || !confirmEmail || !password || !confirmPassword) {
+      toast.error('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    // Validação de correspondência de e-mails
     if (email !== confirmEmail) {
-      setError('Os e-mails não coincidem!');
+      toast.error('Os e-mails não coincidem!');
       return;
     }
 
-    if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres.');
+    // --- Validação de domínio de e-mail (Frontend) ---
+    const emailDomain = email.split('@')[1];
+    if (emailDomain && TEMPORARY_EMAIL_DOMAINS.includes(emailDomain.toLowerCase())) {
+      toast.error('E-mails temporários não são permitidos.');
       return;
     }
+    if (!emailDomain || !ALLOWED_EMAIL_DOMAINS.includes(emailDomain.toLowerCase())) {
+      toast.error('Apenas e-mails de domínios permitidos (ex: Gmail, Outlook, Yahoo) são aceitos.');
+      return;
+    }
+    // --- FIM da Validação de domínio de e-mail ---
+
+    // Validação de correspondência de senhas
+    if (password !== confirmPassword) {
+      toast.error('As senhas não coincidem.');
+      return;
+    }
+
+    // --- Validação de complexidade da senha (Frontend) ---
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/\\|`~-]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      toast.error('A senha deve conter pelo menos 8 caracteres, incluindo 1 letra maiúscula, 1 minúscula, 1 número e 1 caractere especial.');
+      return;
+    }
+    // --- FIM da Validação de complexidade da senha ---
+
+    setLoading(true);
 
     try {
       const res = await fetch('/api/register', {
@@ -36,14 +92,19 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert('Conta criada com sucesso!');
-        window.location.href = '/login';
+        toast.success(data.message || 'Cadastro iniciado! Verifique seu e-mail.');
+        setTimeout(() => {
+          // ALTERADO: Redireciona para a página de verificação de e-mail, passando o e-mail
+          router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        }, 2000);
       } else {
-        setError(data.error || 'Erro ao criar conta.');
+        toast.error(data.error || 'Falha no cadastro.');
       }
     } catch (error) {
-      console.error('Erro:', error);
-      setError('Erro de rede. Tente novamente.');
+      console.error('Erro na requisição de cadastro:', error);
+      toast.error('Erro de rede. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,11 +173,20 @@ export default function RegisterPage() {
             ></i>
           </div>
 
-          {error && (
-            <div className="register-link">
-              <p style={{ color: 'red', fontWeight: 'bold' }}>{error}</p>
-            </div>
-          )}
+          <div className="input-box">
+            <input
+              placeholder="Confirmar Senha"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+            <i
+              className={`bx ${showConfirmPassword ? 'bx-show' : 'bx-hide'}`}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={{ cursor: 'pointer' }}
+            ></i>
+          </div>
 
           <div className="remember-forgot">
             <label>
@@ -126,7 +196,9 @@ export default function RegisterPage() {
             <a href="#">Esqueci senha</a>
           </div>
 
-          <button type="submit" className="login-button">Criar conta</button>
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Cadastrando...' : 'Criar conta'}
+          </button>
 
           <div className="register-link">
             <p>Tem uma conta? <a href="/login">Fazer Login</a></p>

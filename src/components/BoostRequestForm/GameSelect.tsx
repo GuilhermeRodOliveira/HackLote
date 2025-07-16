@@ -11,7 +11,7 @@ export default function GameSelect({ value, onChange }: Props) {
       <option value="Valorant">Valorant</option>
       <option value="CS2">CS2</option>
       <option value="Fortnite">Fortnite</option>
-      <option value="Fortnite">Rocket League</option>
+      <option value="Rocket League">Rocket League</option>
     </select>
   );
 }

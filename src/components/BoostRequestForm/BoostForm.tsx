@@ -1,18 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import GameSelect from './GameSelect';
+import { useEffect, useState, useContext } from 'react'; // Importar useContext
+import { toast } from 'react-toastify'; // Importar toast
+import { AuthContext } from '@/context/AuthContext'; // Importar AuthContext
+import GameSelect from './GameSelect'; // Manter GameSelect por enquanto
 import RankSelect from './RankSelect';
 
 export default function BoostForm() {
+  // Obter user e loading do AuthContext
+  const { user, loading: authLoading } = useContext(AuthContext);
+
   const [game, setGame] = useState('');
   const [currentRank, setCurrentRank] = useState('');
   const [desiredRank, setDesiredRank] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  // Removido userId do estado local, pois virá do AuthContext
+  // const [userId, setUserId] = useState<string | null>(null);
 
-  // Carrega o userId do localStorage após montagem do componente
+  // Removido useEffect para carregar userId do localStorage, pois virá do AuthContext
+  /*
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -20,12 +27,14 @@ export default function BoostForm() {
       if (parsed?.id) setUserId(parsed.id);
     }
   }, []);
+  */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userId || !game || !currentRank || !desiredRank) {
-      alert('Preencha todos os campos obrigatórios.');
+    // Usar user?.id do AuthContext
+    if (!user?.id || !game || !currentRank || !desiredRank) {
+      toast.error('Preencha todos os campos obrigatórios.'); // Usar toast
       return;
     }
 
@@ -35,27 +44,39 @@ export default function BoostForm() {
       const res = await fetch('/api/boostrequest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, game, currentRank, desiredRank, description }),
+        // userId não é mais enviado no body, pois o backend o extrai do token JWT
+        body: JSON.stringify({ game, currentRank, desiredRank, description }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        alert('Pedido de boost criado com sucesso!');
+        toast.success('Pedido de boost criado com sucesso!'); // Usar toast
         setGame('');
         setCurrentRank('');
         setDesiredRank('');
         setDescription('');
       } else {
-        alert(data.error || 'Erro ao criar pedido.');
+        toast.error(data.error || 'Erro ao criar pedido.'); // Usar toast
       }
     } catch (err) {
-      alert('Erro de rede. Tente novamente.');
+      toast.error('Erro de rede. Tente novamente.'); // Usar toast
       console.error('Erro ao enviar pedido de boost:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Redirecionar se não estiver autenticado e não estiver carregando
+  if (!authLoading && !user) {
+    // Você pode adicionar um redirecionamento aqui se quiser forçar o login
+    // router.push('/login');
+    return <p className="text-white text-center">Você precisa estar logado para criar um pedido de boost.</p>;
+  }
+
+  if (authLoading) {
+    return <p className="text-white text-center">Carregando informações do usuário...</p>;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="boost-form">

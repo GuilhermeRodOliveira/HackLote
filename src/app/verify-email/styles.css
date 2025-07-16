@@ -1,0 +1,95 @@
+/* src/app/verify-email/styles.css */
+
+/* Importações de ícones específicas para esta página (Boxicons) */
+@import url('https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css');
+
+/* Estilos específicos do background e centralização da página de verificação */
+.verify-email-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #0d0f25; /* Fundo sólido escuro */
+  /* Se o <main> no layout.tsx já tem padding-left, este wrapper não precisa */
+  /* padding-left: 85px; */
+}
+
+/* Estilos do formulário de verificação (reutiliza classes do login/registro) */
+/* .container (o card do formulário) é uma classe GLOBAL definida em globals.css */
+
+.container h1 {
+  font-size: 36px;
+  text-align: center;
+}
+
+.input-box {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin: 30px 0;
+}
+
+.input-box input {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 40px;
+  outline: none;
+  font-size: 16px;
+  color: white;
+  padding: 20px 45px 20px 20px;
+}
+
+.input-box input::placeholder {
+  color: rgb(209, 207, 207);
+}
+
+.input-box i {
+  position: absolute;
+  right: 20px;
+  font-size: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+}
+
+/* Botão de verificação (reutiliza estilo do botão de login) */
+.login-button {
+  width: 100%;
+  height: 50px;
+  background-color: white;
+  border: none;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 16px;
+  color: black;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  transition: 0.5s ease;
+}
+
+.login-button:hover {
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Links de navegação (reutiliza estilo do registro) */
+.register-link {
+  font-size: 14px;
+  text-align: center;
+  margin: 15px 0; /* Ajustado para ter margem em cima e embaixo */
+  color: white;
+}
+
+.register-link a {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}

@@ -1,41 +1,34 @@
 'use client';
 
+// Defina a interface para um item de compra
+interface Compra {
+  id: number; // Ou string, dependendo do seu backend
+  item: string;
+  jogo: string;
+  data: string;
+  preco: number;
+}
+
 export default function ComprasPage() {
-  const compras = [
-    {
-      id: 1,
-      item: 'Skin AK-47 Neon Rider',
-      jogo: 'CS2',
-      data: '10/07/2025',
-      preco: 129.90,
-    },
-    {
-      id: 2,
-      item: 'Conta nível 30 com Elo Ouro',
-      jogo: 'League of Legends',
-      data: '08/07/2025',
-      preco: 89.99,
-    },
-    {
-      id: 3,
-      item: 'Gift Card Steam R$50',
-      jogo: 'Steam',
-      data: '05/07/2025',
-      preco: 50.00,
-    },
-  ];
+  // Em um aplicativo real, você buscaria os dados de compras de uma API
+  // Por enquanto, vamos simular que não há compras para um novo usuário.
+  const compras: Compra[] = []; // Array vazio, mas agora com tipo explícito
 
   return (
-    <main className="pt-24 pl-[85px] pr-6 min-h-screen bg-[#0d0f25] text-white">
+    <div className="max-w-7xl mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">🛒 Minhas Compras</h1>
       
-      <section className="bg-[#161a35] rounded-xl shadow-lg p-6">
+      <section>
         {compras.length === 0 ? (
-          <p className="text-gray-400">Você ainda não realizou nenhuma compra.</p>
+          // Aplicando content-box à mensagem de "nenhuma compra"
+          <div className="content-box text-center text-gray-400 text-lg py-8">
+            Você ainda não realizou nenhuma compra.
+          </div>
         ) : (
           <ul className="space-y-4">
             {compras.map((compra) => (
-              <li key={compra.id} className="bg-[#1c1f2e] p-4 rounded-lg border border-purple-500/40 hover:shadow-purple-500/30 transition">
+              // Aplicando content-box a cada item da lista de compras
+              <li key={compra.id} className="content-box">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-lg font-semibold text-purple-400">{compra.item}</h3>
@@ -48,6 +41,6 @@ export default function ComprasPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

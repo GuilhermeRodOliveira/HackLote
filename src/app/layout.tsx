@@ -1,16 +1,26 @@
-import './globals.css';
-import SideBar from '@/components/SideBar/SideBar';
 import type { Metadata } from 'next';
+import { Poppins } from 'next/font/google';
+import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
+import SideBar from '@/components/SideBar/SideBar';
 import ToastProvider from '@/components/ToastProvider/ToastProvider';
 
-import { AuthProvider } from '@/context/AuthContext'; // import do AuthProvider
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins',
+});
 
 export const metadata: Metadata = {
   title: 'Hack Lote',
   description: 'Sua loja gamer',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="pt-br">
       <head>
@@ -19,10 +29,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#0f0f1a] text-white font-sans">
+      <body className={`${poppins.className} bg-black antialiased flex`}>
         <AuthProvider>
           <SideBar />
-          <main style={{ paddingLeft: '85px', paddingTop: '24px' }}>
+          {/* ALTERADO: Removido 'p-4 sm:p-8' do main. Agora, as páginas individuais gerenciarão seu padding. */}
+          <main className="flex-1 overflow-auto" style={{ paddingLeft: 'calc(85px + 24px)' }}>
             {children}
           </main>
           <ToastProvider />

@@ -72,7 +72,7 @@ export default function Page() {
       {/* Últimas Atualizações */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold mb-4 text-purple-400">📢 Últimas Atualizações</h2>
-        <div className="bg-[#161a35] p-6 rounded-xl shadow-lg">
+        <div className="bg-#dbd4d4e3 p-6 rounded-xl shadow-lg">
           <p className="text-gray-300">
             Nada novo por enquanto... mas grandes coisas estão chegando! 🚀
           </p>

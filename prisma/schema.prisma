@@ -1,3 +1,6 @@
+// Este é o seu arquivo prisma/schema.prisma
+
+// Seus modelos existentes
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,45 +11,123 @@ datasource db {
 }
 
 model User {
-  id             String       @id @default(uuid())
-  nome           String?      // <- opcional
-  usuario        String?      @unique
-  email          String       @unique
-  password       String
+  id            String         @id @default(uuid())
+  nome          String?
+  usuario       String?        @unique
+  email         String         @unique
+  password      String
 
-  boostRequests  BoostRequest[]  
-  boostBids      BoostBid[]      
+  // NOVO: Campos de perfil
+  bio           String?        // REMOVIDO @db.Text para compatibilidade com SQLite
+  profilePictureUrl String?    // URL da imagem de perfil
+
+  // Campos para rastrear tentativas de login falhas
+  failedLoginAttempts Int      @default(0)
+  lockoutUntil        DateTime?
+
+  boostRequests BoostRequest[]
+  boostBids     BoostBid[]
+
+  listings      Listing[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  boostNotificationPreferences BoostNotificationPreference[]
+
+  // NOVO: Relações para o sistema de avaliações
+  reviewsGiven  Review[]       @relation("ReviewGiven") // Avaliações que este usuário deu
+  reviewsReceived Review[]     @relation("ReviewReceived") // Avaliações que este usuário recebeu
+}
+
+model Listing {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  price       Float
+  category    String
+  subCategory String
+  imageUrl    String?
+  attributes  Json?
+
+  sellerId    String
+  seller      User      @relation(fields: [sellerId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 
 model BoostRequest {
-  id              String       @id @default(uuid())
-  user            User         @relation(fields: [userId], references: [id])
-  userId          String
-  game            String
-  currentRank     String
-  desiredRank     String
-  description     String?
-  createdAt       DateTime     @default(now())
+  id            String        @id @default(uuid())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        String
+  game          String
+  currentRank   String
+  desiredRank   String
+  description   String?
+  createdAt     DateTime      @default(now())
 
-  bids            BoostBid[]
+  bids          BoostBid[]
 
-  acceptedBidId   String?      @unique
-  acceptedBid     BoostBid?    @relation("AcceptedBidRelation", fields: [acceptedBidId], references: [id])
+  acceptedBidId String?       @unique
+  acceptedBid   BoostBid?     @relation("AcceptedBidRelation", fields: [acceptedBidId], references: [id])
 }
 
 
 model BoostBid {
-  id              String        @id @default(uuid())
-  booster         User          @relation(fields: [boosterId], references: [id])
-  boosterId       String
+  id            String        @id @default(uuid())
+  booster       User          @relation(fields: [boosterId], references: [id])
+  boosterId     String
 
-  boostRequest    BoostRequest  @relation(fields: [boostRequestId], references: [id])
-  boostRequestId  String
+  boostRequest  BoostRequest  @relation(fields: [boostRequestId], references: [id])
+  boostRequestId String
 
-  amount          Float
-  estimatedTime   String
-  createdAt       DateTime      @default(now())
+  amount        Float
+  estimatedTime String
+  createdAt     DateTime      @default(now())
 
-  acceptedBy      BoostRequest? @relation("AcceptedBidRelation")
+  acceptedBy    BoostRequest? @relation("AcceptedBidRelation")
+}
+
+model BoostNotificationPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  game      String
+  boostType String
+
+  @@unique([userId, game, boostType]) 
+}
+
+model VerificationCode {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  code           String
+  expiresAt      DateTime
+  nome           String?
+  usuario        String?
+  hashedPassword String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// NOVO MODELO: Para avaliações de usuários
+model Review {
+  id          String    @id @default(cuid())
+  rating      Int       // Pontuação da avaliação (ex: 1 a 5 estrelas)
+  comment     String?   // REMOVIDO @db.Text para compatibilidade com SQLite
+  
+  // Quem deu a avaliação
+  reviewerId  String
+  reviewer    User      @relation("ReviewGiven", fields: [reviewerId], references: [id])
+
+  // Quem recebeu a avaliação
+  reviewedId  String
+  reviewed    User      @relation("ReviewReceived", fields: [reviewedId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Garante que um usuário só possa avaliar outro usuário uma vez (opcional, mas comum)
+  @@unique([reviewerId, reviewedId])
 }

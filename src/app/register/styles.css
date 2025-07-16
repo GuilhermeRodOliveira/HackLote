@@ -1,32 +1,28 @@
 /* src/app/register/styles.css */
 
-/* Mantenha os imports de fontes e ícones se forem usados apenas aqui,
-   ou mova para globals.css se forem globais */
 @import url('https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
-}
-
-/* NOVA CLASSE para o background e centralização APENAS desta página */
 .register-page-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: url('/img/img.jpg') no-repeat center center; /* Este é o background da imagem */
-  background-size: cover;
+  background-color: #0d0f25;
 }
 
-/* REMOVA a definição de .container daqui. Ela virá do globals.css */
-/* REMOVA a definição de body aqui. Ela virá do globals.css ou da nova classe acima */
-
-/* Estilos específicos do formulário de registro */
-/* (Mantenha apenas os estilos para classes que são exclusivas ou modificações específicas aqui) */
+.container {
+  padding-bottom: 30px;
+  color: #eee;
+  backdrop-filter: blur(120px);
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  width: 420px;
+  padding: 20px 40px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  margin-top: auto;
+  margin-bottom: auto;
+}
 
 .container h1 {
   font-size: 36px;
@@ -62,17 +58,28 @@
   font-size: 20px;
   top: 50%;
   transform: translateY(-50%);
+  color: white;
 }
 
 .remember-forgot {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.remember-forgot label {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .remember-forgot label input {
   accent-color: white;
-  margin-right: 5px;
-  margin: -15px 0 15px;
+  margin-right: 8px; /* ALTERADO: Aumentado para 8px para mais espaço */
+  margin: 0; /* Garante que outras margens não interfiram */
 }
 
 .remember-forgot a {
@@ -84,7 +91,7 @@
   text-decoration: underline;
 }
 
-.login-button { /* Use a classe renomeada */
+.login-button {
   width: 100%;
   height: 50px;
   background-color: white;
@@ -96,9 +103,10 @@
   font-weight: 600;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-top: 20px;
+  transition: 0.5s ease;
 }
 
-.login-button:hover { /* Use a classe renomeada */
+.login-button:hover {
   background-color: transparent;
   border: 2px solid rgba(255, 255, 255, .2);
   color: white;
@@ -108,7 +116,7 @@
 .register-link{
   font-size: 14px;
   text-align: center;
-  margin: 20px 0 15px;
+  margin: 15px 0;
 }
 
 .register-link a{
