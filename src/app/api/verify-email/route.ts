@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../utils/prisma';
 import jwt from 'jsonwebtoken'; // Para gerar o token de login após a verificação
 
-const prisma = new PrismaClient();
+
 const JWT_SECRET = process.env.JWT_SECRET; // JWT_SECRET deve ser carregado do .env
 
 export async function POST(req: NextRequest) {

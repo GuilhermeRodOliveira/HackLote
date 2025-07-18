@@ -1,10 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../utils/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto'; // Importar para gerar códigos aleatórios
 
-const prisma = new PrismaClient();
+
 const JWT_SECRET = process.env.JWT_SECRET; // JWT_SECRET deve ser carregado do .env
 
 // Lista de domínios de e-mail temporários conhecidos
@@ -57,8 +57,9 @@ export async function POST(req: NextRequest) {
     }
     if (!emailDomain || !ALLOWED_EMAIL_DOMAINS.includes(emailDomain.toLowerCase())) {
       console.error('Erro de validação: Domínio de e-mail não permitido.');
+      // ALTERAÇÃO AQUI: Mensagem de erro personalizada
       return NextResponse.json({ 
-        error: 'Apenas e-mails de domínios permitidos (ex: Gmail, Outlook, Yahoo) são aceitos.' 
+        error: `Não é possível criar conta com esse domínio ${emailDomain}.` 
       }, { status: 400 });
     }
 

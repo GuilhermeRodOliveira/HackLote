@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../utils/prisma'; // Adicione esta linha
+
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {

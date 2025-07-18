@@ -1,8 +1,7 @@
 // src/app/api/boostbid/accept/route.ts
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../../../utils/prisma'; // Adicione esta linha
+// Certifique-se de que o caminho relativo esteja correto para cada rota!
 
 export async function POST(req: Request) {
   try {

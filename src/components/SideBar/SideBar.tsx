@@ -1,16 +1,17 @@
+// src/components/SideBar/SideBar.tsx
 'use client';
 
 import React, { useContext, useState, useEffect } from 'react';
 import Image from 'next/image';
-import styles from './SideBar.module.css';
+import styles from './SideBar.module.css'; // Mantenha este se você usa CSS Modules
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 // Importe o contexto de autenticação
-import { AuthContext } from '@/context/AuthContext';
+import { AuthContext } from '@/context/AuthContext'; // Certifique-se de que o alias @/context está configurado em tsconfig.json
 
 // Caminho para o logo
-const logo = '/img/logo.png';
+const logo = '/img/logo.png'; // Certifique-se que public/img/logo.png existe
 
 export default function SideBar() {
   // Use o contexto para acessar o usuário e as funções de logout
@@ -22,9 +23,9 @@ export default function SideBar() {
 
   // Função para lidar com o logout
   const handleLogout = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await logout();
-    router.push('/login');
+    e.preventDefault(); // Previne o comportamento padrão do link
+    await logout(); // Chama a função de logout do contexto
+    router.push('/login'); // Redireciona para a página de login após o logout
   };
 
   // useEffect para buscar a contagem de notificações
@@ -44,7 +45,7 @@ export default function SideBar() {
           // Contamos o número de pedidos retornados
           setNotificationCount(data.boostRequests.length);
         } else {
-          console.error('Erro ao buscar contagem de notificações:', data.error);
+          console.error('Erro ao buscar contagem de notificações:', data.error || res.statusText);
           setNotificationCount(null);
         }
       } catch (error) {
@@ -58,7 +59,7 @@ export default function SideBar() {
 
     // Opcional: Atualizar a contagem periodicamente (ex: a cada 30 segundos)
     const interval = setInterval(fetchNotificationCount, 30000); // A cada 30 segundos
-    return () => clearInterval(interval); // Limpa o intervalo na desmontagem
+    return () => clearInterval(interval); // Limpa o intervalo na desmontagem para evitar vazamento de memória
   }, [user]); // Dependência: user (para rebuscar quando o login/logout ocorrer)
 
   // Função para formatar a contagem (99+)
@@ -67,9 +68,9 @@ export default function SideBar() {
       return null; // Não exibe nada se for 0 ou nulo
     }
     if (count > 99) {
-      return '99+';
+      return '99+'; // Exibe "99+" se a contagem for maior que 99
     }
-    return count;
+    return count; // Exibe o número exato
   };
 
   const formattedCount = formatNotificationCount(notificationCount);
@@ -118,7 +119,8 @@ export default function SideBar() {
             <span className={styles.linkText}>Boosting</span>
           </div>
           <ul className={styles['submenu-items']}>
-            <li><Link href="/boosting/create">📥 Novo Boosting</Link></li>
+            {/* ALTERADO: Link para "Meus Boostings" */}
+            <li><Link href="/boosting/my-boosts">🚀 Meus Boostings</Link></li> 
             <li><Link href="/boosting/matches">📝 Ver Pedidos</Link></li>
           </ul>
         </li>
@@ -163,7 +165,6 @@ export default function SideBar() {
 
         {/* Links da seção "Conta" */}
         <li>
-          {/* ALTERADO: Link para a página de perfil */}
           <Link href="/perfil"> 
             <span className="material-symbols-outlined">account_circle</span> {/* Ícone de perfil */}
             <span className={styles.linkText}>Perfil</span>
@@ -199,7 +200,8 @@ export default function SideBar() {
       <div className={styles['user-account']}>
         <div className={styles['user-profile']}>
           {/* Imagem do avatar do usuário */}
-          <Image src={logo} alt="Avatar-img" width={42} height={42} />
+          {/* Você pode substituir 'logo' por user.profilePictureUrl aqui, se disponível no seu 'user' */}
+          <Image src={logo} alt="Avatar-img" width={42} height={42} /> 
           <div className={styles['user-detail']}>
             {user ? (
               <>

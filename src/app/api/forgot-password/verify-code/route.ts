@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../utils/prisma';
 import jwt from 'jsonwebtoken'; // Para gerar um token temporário se necessário (não usado aqui para simplificar)
 
-const prisma = new PrismaClient();
+
 const JWT_SECRET = process.env.JWT_SECRET; // Carregar JWT_SECRET do .env
 
 export async function POST(req: NextRequest) {

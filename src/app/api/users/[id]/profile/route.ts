@@ -1,9 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../../utils/prisma';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET; // Carregar JWT_SECRET do .env
 
 interface JwtUserPayload {
   id: string;
@@ -13,13 +12,16 @@ interface JwtUserPayload {
   exp: number;
 }
 
-// ===== GET: Buscar perfil de usuário =====
+// GET: Buscar perfil do usuário
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } } 
 ) {
   try {
-    const { id } = context.params;
+    // << HACK PARA O AVISO DO TURBOPACK/NEXT.JS 15.3.5 >>
+    // Isso força o 'params' a ser "awaitado", mesmo que ele já seja um objeto.
+    const resolvedParams = await Promise.resolve(params);
+    const { id } = resolvedParams; // Obtém o ID do utilizador da URL
 
     if (!id) {
       return NextResponse.json({ error: 'ID do usuário não fornecido.' }, { status: 400 });
@@ -31,6 +33,7 @@ export async function GET(
         id: true,
         nome: true,
         usuario: true,
+        // email: true, // Geralmente email não é público no perfil. Se quiser, descomente.
         bio: true,
         profilePictureUrl: true,
         createdAt: true,
@@ -49,22 +52,20 @@ export async function GET(
   }
 }
 
-// ===== PUT: Atualizar perfil de usuário =====
+// PUT: Atualizar perfil do usuário
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } } 
 ) {
   try {
-    const { id } = context.params;
-
-    if (!id) {
-      return NextResponse.json({ error: 'ID do usuário não fornecido.' }, { status: 400 });
-    }
-
     if (!JWT_SECRET) {
       console.error('JWT_SECRET não está definido nas variáveis de ambiente.');
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
+
+    // << HACK PARA O AVISO DO TURBOPACK/NEXT.JS 15.3.5 >>
+    const resolvedParams = await Promise.resolve(params);
+    const { id } = resolvedParams;
 
     const tokenCookie = req.cookies.get('token');
     if (!tokenCookie || !tokenCookie.value) {
@@ -79,14 +80,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 401 });
     }
 
-    const authenticatedUserId = decodedToken.id;
-
-    if (authenticatedUserId !== id) {
+    if (decodedToken.id !== id) {
       return NextResponse.json({ error: 'Não autorizado a atualizar este perfil.' }, { status: 403 });
     }
 
     const body = await req.json();
-    const { nome, usuario, bio, profilePictureBase64 } = body;
+    const { nome, usuario, bio, profilePictureBase64 } = body; 
 
     const dataToUpdate: {
       nome?: string;
@@ -97,9 +96,10 @@ export async function PUT(
 
     if (nome !== undefined) dataToUpdate.nome = nome;
     if (bio !== undefined) dataToUpdate.bio = bio;
-
-    if (profilePictureBase64 !== undefined) {
-      dataToUpdate.profilePictureUrl = profilePictureBase64 === null ? null : profilePictureBase64;
+    if (profilePictureBase64 !== undefined && profilePictureBase64 !== null) {
+      dataToUpdate.profilePictureUrl = profilePictureBase64;
+    } else if (profilePictureBase64 === null) {
+      dataToUpdate.profilePictureUrl = null;
     }
 
     const currentUserProfile = await prisma.user.findUnique({
@@ -108,7 +108,7 @@ export async function PUT(
     });
 
     if (!currentUserProfile) {
-      return NextResponse.json({ error: 'Perfil de usuário não encontrado para atualização.' }, { status: 404 });
+      return NextResponse.json({ error: 'Perfil não encontrado.' }, { status: 404 });
     }
 
     if (usuario !== undefined && usuario !== currentUserProfile.usuario) {
@@ -117,12 +117,11 @@ export async function PUT(
       });
 
       if (existingUser && existingUser.id !== id) {
-        return NextResponse.json({ error: 'Nome de usuário já em uso por outro usuário.' }, { status: 409 });
+        return NextResponse.json({ error: 'Nome de usuário já está em uso.' }, { status: 409 });
       }
-
       dataToUpdate.usuario = usuario;
     }
-
+    
     if (Object.keys(dataToUpdate).length === 0) {
       return NextResponse.json({ message: 'Nenhum dado fornecido para atualização.' }, { status: 200 });
     }
@@ -143,7 +142,7 @@ export async function PUT(
     return NextResponse.json({ message: 'Perfil atualizado com sucesso!', profile: updatedUser }, { status: 200 });
 
   } catch (error) {
-    console.error('Erro ao atualizar perfil de usuário:', error);
-    return NextResponse.json({ error: 'Erro interno no servidor ao atualizar perfil.' }, { status: 500 });
+    console.error('Erro ao atualizar perfil:', error);
+    return NextResponse.json({ error: 'Erro interno ao atualizar perfil.' }, { status: 500 });
   }
 }

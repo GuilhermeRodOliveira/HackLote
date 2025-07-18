@@ -1,8 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../utils/prisma';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey'; // Use a mesma chave secreta
 
 // Interface para o payload do JWT (deve ser a mesma definida em app/api/me/route.ts)

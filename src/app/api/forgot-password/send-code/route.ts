@@ -1,9 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../utils/prisma';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
-const prisma = new PrismaClient();
 
 // Lista de domínios de e-mail permitidos (mesma lista do login e registro)
 const ALLOWED_EMAIL_DOMAINS = [

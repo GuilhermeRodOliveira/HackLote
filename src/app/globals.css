@@ -13,17 +13,17 @@
 
 /* Estilos globais para o body e html */
 html {
-  margin: 0;
-  padding: 0;
+  /* Não adicione padding ou margin aqui */
 }
 
 body {
-  min-height: 100vh;
-  background-color: black;
-  color: #dbd4d4e3; /* Cor de texto padrão para o site */
-  
+  min-height: 100vh; /* Garante que o body ocupe a altura total da viewport */
+  background-color: #0f0f1a; /* Fundo escuro padrão para todo o site (como no Eldorado) */
+  color: #ffffff; /* Cor de texto padrão global */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* NOVO/IMPORTANTE: Definindo a fonte Poppins diretamente no body como fallback */
+  font-family: var(--font-poppins), sans-serif; 
 }
 
 /* Estilos globais para elementos interativos */
@@ -54,32 +54,32 @@ a:hover {
   background: #555;
 }
 
-/* Estilo .container GLOBAL (para formulários de login/registro) */
-.container {
-  color: #eee; /* Cor de texto dentro do container (formulário) */
+/* Regras para outline (melhora a acessibilidade): */
+*:focus-visible {
+  outline: 2px solid #63b3ed;
+  outline-offset: 2px;
+}
+
+/* Opcional: Container de formulários. Use classes Tailwind sempre que possível. */
+.container-form {
+  color: #eee;
   backdrop-filter: blur(120px);
   background-color: transparent;
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   width: 420px;
-  margin-top: 100px;
+  margin-top: 100px; /* Pode precisar de ajuste com a SideBar */
   padding: 20px 40px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
-/* NOVO: Estilo para caixas de conteúdo em todo o site */
+/* Opcional: Estilo para caixas de conteúdo. Use classes Tailwind sempre que possível. */
 .content-box {
-  background-color: white; /* ALTERADO: Fundo branco */
-  color: #1a202c; /* NOVO: Cor do texto dentro da box para ser visível no fundo branco */
+  background-color: #1a202c; /* Fundo escuro sutil para caixas, para combinar com o tema */
+  color: #ffffff; /* Texto branco no fundo escuro */
   border: 1px solid rgba(74, 85, 104, 0.5);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   margin-bottom: 24px;
-}
-
-/* Regras para outline (melhora a acessibilidade): */
-*:focus-visible {
-  outline: 2px solid #63b3ed;
-  outline-offset: 2px;
 }

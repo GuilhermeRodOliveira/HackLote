@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../utils/prisma'; // Adicione esta linha
+// Certifique-se de que o caminho relativo esteja correto para cada rota!
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
 // ALTERADO: Removido o valor hardcoded de fallback. JWT_SECRET agora virá APENAS de process.env
 const JWT_SECRET = process.env.JWT_SECRET; 
 

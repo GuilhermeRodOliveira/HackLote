@@ -11,32 +11,54 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  nome          String?
-  usuario       String?        @unique
-  email         String         @unique
-  password      String
+  id                                String      @id @default(uuid())
+  nome                              String?     // Nome completo ou de exibição
+  usuario                           String?     @unique // Nome de usuário público
+  email                             String      @unique
+  password                          String
 
-  // NOVO: Campos de perfil
-  bio           String?        // REMOVIDO @db.Text para compatibilidade com SQLite
-  profilePictureUrl String?    // URL da imagem de perfil
+  // Campos de perfil
+  bio                               String?
+  profilePictureUrl                 String?
+  country                           String?
+
+  // Configurações de Notificação
+  receiveMarketingEmails            Boolean     @default(true)
+  receiveOrderUpdates               Boolean     @default(true)
+  receiveMessageNotifications       Boolean     @default(true)
+  receiveInAppNotifications         Boolean     @default(true)
+
+  // Configurações de Privacidade
+  isProfilePublic                   Boolean     @default(true)
+  isActivityPublic                  Boolean     @default(true)
+
+  // Preferências de Interface
+  preferredLanguage                 String      @default("pt-BR")
+  theme                             String      @default("dark")
+  preferredCurrency                 String      @default("BRL")
 
   // Campos para rastrear tentativas de login falhas
-  failedLoginAttempts Int      @default(0)
-  lockoutUntil        DateTime?
+  failedLoginAttempts               Int         @default(0)
+  lockoutUntil                      DateTime?
 
-  boostRequests BoostRequest[]
-  boostBids     BoostBid[]
+  // Relações existentes
+  boostRequests                     BoostRequest[]
+  boostBids                         BoostBid[]
+  listings                          Listing[]
+  createdAt                         DateTime    @default(now())
+  updatedAt                         DateTime    @updatedAt
+  boostNotificationPreferences      BoostNotificationPreference[]
+  reviewsGiven                      Review[]    @relation("ReviewGiven")
+  reviewsReceived                   Review[]    @relation("ReviewReceived")
+  userNotifications                 UserNotification[] // Notificações lidas/não lidas por boost request
+  
+  // Relacionamento para o modelo Notification
+  notifications                     Notification[] // Notificações gerais que este usuário recebeu
 
-  listings      Listing[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  boostNotificationPreferences BoostNotificationPreference[]
-
-  // NOVO: Relações para o sistema de avaliações
-  reviewsGiven  Review[]       @relation("ReviewGiven") // Avaliações que este usuário deu
-  reviewsReceived Review[]     @relation("ReviewReceived") // Avaliações que este usuário recebeu
+  // Relações para o Chat
+  chatSessionsAsParticipant1        ChatSession[] @relation("ChatParticipant1")
+  chatSessionsAsParticipant2        ChatSession[] @relation("ChatParticipant2")
+  messages                          ChatMessage[]
 }
 
 model Listing {
@@ -49,6 +71,9 @@ model Listing {
   imageUrl    String?
   attributes  Json?
 
+  // Campo 'game' para a listagem
+  game        String?   // Adicione este campo para o jogo da listagem
+
   sellerId    String
   seller      User      @relation(fields: [sellerId], references: [id])
 
@@ -56,47 +81,52 @@ model Listing {
   updatedAt   DateTime  @updatedAt
 }
 
-
 model BoostRequest {
-  id            String        @id @default(uuid())
-  user          User          @relation(fields: [userId], references: [id])
+  id            String    @id @default(uuid())
+  user          User      @relation(fields: [userId], references: [id])
   userId        String
   game          String
   currentRank   String
   desiredRank   String
   description   String?
-  createdAt     DateTime      @default(now())
+  createdAt     DateTime  @default(now())
 
   bids          BoostBid[]
 
-  acceptedBidId String?       @unique
-  acceptedBid   BoostBid?     @relation("AcceptedBidRelation", fields: [acceptedBidId], references: [id])
+  acceptedBidId String?   @unique
+  acceptedBid   BoostBid? @relation("AcceptedBidRelation", fields: [acceptedBidId], references: [id])
+
+  userNotifications UserNotification[]
+  notifications   Notification[]
+  
+  // Relação com a sessão de chat
+  chatSession   ChatSession?
 }
 
-
 model BoostBid {
-  id            String        @id @default(uuid())
-  booster       User          @relation(fields: [boosterId], references: [id])
+  id            String          @id @default(uuid())
+  booster       User            @relation(fields: [boosterId], references: [id])
   boosterId     String
 
-  boostRequest  BoostRequest  @relation(fields: [boostRequestId], references: [id])
+  boostRequest  BoostRequest    @relation(fields: [boostRequestId], references: [id])
   boostRequestId String
 
   amount        Float
   estimatedTime String
-  createdAt     DateTime      @default(now())
+  createdAt     DateTime        @default(now())
 
-  acceptedBy    BoostRequest? @relation("AcceptedBidRelation")
+  acceptedBy    BoostRequest?   @relation("AcceptedBidRelation")
+  notifications Notification[]
 }
 
 model BoostNotificationPreference {
-  id        String   @id @default(cuid())
+  id        String @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User   @relation(fields: [userId], references: [id])
   game      String
   boostType String
 
-  @@unique([userId, game, boostType]) 
+  @@unique([userId, game, boostType])
 }
 
 model VerificationCode {
@@ -107,27 +137,100 @@ model VerificationCode {
   nome           String?
   usuario        String?
   hashedPassword String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
-// NOVO MODELO: Para avaliações de usuários
 model Review {
   id          String    @id @default(cuid())
-  rating      Int       // Pontuação da avaliação (ex: 1 a 5 estrelas)
-  comment     String?   // REMOVIDO @db.Text para compatibilidade com SQLite
-  
-  // Quem deu a avaliação
+  rating      Int
+  comment     String?
   reviewerId  String
   reviewer    User      @relation("ReviewGiven", fields: [reviewerId], references: [id])
-
-  // Quem recebeu a avaliação
   reviewedId  String
   reviewed    User      @relation("ReviewReceived", fields: [reviewedId], references: [id])
-
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  // Garante que um usuário só possa avaliar outro usuário uma vez (opcional, mas comum)
   @@unique([reviewerId, reviewedId])
+}
+
+model UserNotification {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  boostRequestId String
+  boostRequest   BoostRequest   @relation(fields: [boostRequestId], references: [id])
+  isRead         Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  @@unique([userId, boostRequestId])
+}
+
+// Modelo para notificações gerais do sistema
+model Notification {
+  id                  String           @id @default(cuid())
+  userId              String           // ID do usuário que deve receber a notificação
+  user                User             @relation(fields: [userId], references: [id])
+  
+  type                NotificationType // Tipo da notificação
+  message             String           // Mensagem da notificação
+  
+  relatedBoostRequestId String?
+  relatedBoostRequest   BoostRequest?    @relation(fields: [relatedBoostRequestId], references: [id])
+  relatedBidId          String?
+  relatedBid            BoostBid?        @relation(fields: [relatedBidId], references: [id])
+  
+  isRead              Boolean          @default(false) // Se a notificação foi lida
+  createdAt           DateTime         @default(now())
+}
+
+// Tipos de notificação
+enum NotificationType {
+  NEW_BID             // Novo lance recebido em um pedido de boost
+  BID_ACCEPTED        // Um lance foi aceito
+  MESSAGE             // Nova mensagem de chat
+  BOOST_REQUEST_CREATED // Pedido de boost criado
+  LISTING_BOUGHT      // Sua listagem foi comprada
+  // Adicione outros tipos conforme necessário
+}
+
+// NOVO MODELO: Sessões de Chat
+model ChatSession {
+  id              String            @id @default(uuid())
+  boostRequestId  String            @unique // Um chat por pedido de boost
+  boostRequest    BoostRequest?     @relation(fields: [boostRequestId], references: [id]) // Relacionamento com o pedido de boost
+  
+  // Participantes do chat (criador do pedido e o booster que fez o lance)
+  participant1Id  String
+  participant1    User              @relation("ChatParticipant1", fields: [participant1Id], references: [id])
+  participant2Id  String
+  participant2    User              @relation("ChatParticipant2", fields: [participant2Id], references: [id])
+
+  status          ChatSessionStatus @default(OPEN) // Aberto, Fechado, Arquivado
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  messages        ChatMessage[]     // Mensagens nesta sessão
+}
+
+// NOVO MODELO: Mensagens de Chat
+model ChatMessage {
+  id            String      @id @default(uuid())
+  chatSessionId String
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id])
+  
+  senderId      String
+  sender        User        @relation(fields: [senderId], references: [id]) // Quem enviou a mensagem
+  
+  content       String      // Conteúdo da mensagem
+  createdAt     DateTime    @default(now())
+  isSystemMessage Boolean     @default(false) // <-- LINHA ADICIONADA AQUI
+}
+
+// NOVO ENUM: Status da Sessão de Chat
+enum ChatSessionStatus {
+  OPEN
+  CLOSED_ACCEPTED // Fechado porque o pedido foi aceito
+  CLOSED_CANCELED // Fechado porque o pedido foi cancelado
 }

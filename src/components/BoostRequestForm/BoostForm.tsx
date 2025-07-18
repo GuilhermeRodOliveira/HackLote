@@ -1,111 +1,159 @@
+// src/components/BoostRequestForm/BoostForm.tsx
 'use client';
 
-import { useEffect, useState, useContext } from 'react'; // Importar useContext
-import { toast } from 'react-toastify'; // Importar toast
-import { AuthContext } from '@/context/AuthContext'; // Importar AuthContext
-import GameSelect from './GameSelect'; // Manter GameSelect por enquanto
-import RankSelect from './RankSelect';
+import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 export default function BoostForm() {
-  // Obter user e loading do AuthContext
-  const { user, loading: authLoading } = useContext(AuthContext);
-
-  const [game, setGame] = useState('');
-  const [currentRank, setCurrentRank] = useState('');
-  const [desiredRank, setDesiredRank] = useState('');
-  const [description, setDescription] = useState('');
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    game: '', // Este campo agora virá do select
+    currentRank: '',
+    desiredRank: '',
+    description: '',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Removido userId do estado local, pois virá do AuthContext
-  // const [userId, setUserId] = useState<string | null>(null);
 
-  // Removido useEffect para carregar userId do localStorage, pois virá do AuthContext
-  /*
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      if (parsed?.id) setUserId(parsed.id);
-    }
-  }, []);
-  */
+  // Lista de jogos suportados para Boosting
+  const supportedGames = [
+    'Valorant',
+    'League of Legends',
+    'GTA V',
+    'CS2',
+    'Fortnite',
+    'Rainbow Six',
+    'Rocket League', // Exemplo: adicione o Rocket League aqui
+    // Adicione todos os jogos que você suporta para boosting
+  ];
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    toast.loading('Enviando pedido de boost...');
 
-    // Usar user?.id do AuthContext
-    if (!user?.id || !game || !currentRank || !desiredRank) {
-      toast.error('Preencha todos os campos obrigatórios.'); // Usar toast
+    if (!formData.game || !formData.currentRank || !formData.desiredRank) {
+      toast.dismiss();
+      toast.error('Por favor, selecione um Jogo, e preencha o Rank Atual e Rank Desejado.');
+      setIsSubmitting(false);
       return;
     }
-
-    setIsSubmitting(true);
 
     try {
       const res = await fetch('/api/boostrequest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // userId não é mais enviado no body, pois o backend o extrai do token JWT
-        body: JSON.stringify({ game, currentRank, desiredRank, description }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
-
       if (res.ok) {
-        toast.success('Pedido de boost criado com sucesso!'); // Usar toast
-        setGame('');
-        setCurrentRank('');
-        setDesiredRank('');
-        setDescription('');
+        const result = await res.json();
+        toast.dismiss();
+        toast.success(result.message || 'Pedido de boost criado com sucesso!');
+        setFormData({
+          game: '',
+          currentRank: '',
+          desiredRank: '',
+          description: '',
+        });
+        router.push('/boosting/matches');
       } else {
-        toast.error(data.error || 'Erro ao criar pedido.'); // Usar toast
+        const errorData = await res.json();
+        toast.dismiss();
+        toast.error(errorData.error || 'Falha ao criar pedido de boost.');
       }
-    } catch (err) {
-      toast.error('Erro de rede. Tente novamente.'); // Usar toast
-      console.error('Erro ao enviar pedido de boost:', err);
+    } catch (error) {
+      console.error('Erro de rede ao criar pedido de boost:', error);
+      toast.dismiss();
+      toast.error('Erro de conexão ao criar pedido de boost.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Redirecionar se não estiver autenticado e não estiver carregando
-  if (!authLoading && !user) {
-    // Você pode adicionar um redirecionamento aqui se quiser forçar o login
-    // router.push('/login');
-    return <p className="text-white text-center">Você precisa estar logado para criar um pedido de boost.</p>;
-  }
-
-  if (authLoading) {
-    return <p className="text-white text-center">Carregando informações do usuário...</p>;
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="boost-form">
-      <h2 className="text-xl font-bold mb-4 text-white">Criar Pedido de Boost</h2>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Campo Jogo - AGORA É UM SELECT */}
+      <div>
+        <label htmlFor="game" className="block text-sm font-medium text-gray-300">Jogo</label>
+        <select
+          id="game"
+          name="game"
+          value={formData.game}
+          onChange={handleChange}
+          required
+          className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm p-2"
+        >
+          <option value="">Selecione um jogo...</option>
+          {supportedGames.map((gameOption) => (
+            <option key={gameOption} value={gameOption}>
+              {gameOption}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <GameSelect value={game} onChange={(e) => setGame(e.target.value)} />
+      {/* Campo Rank Atual */}
+      <div>
+        <label htmlFor="currentRank" className="block text-sm font-medium text-gray-300">Seu Rank Atual</label>
+        <input
+          type="text"
+          id="currentRank"
+          name="currentRank"
+          value={formData.currentRank}
+          onChange={handleChange}
+          required
+          className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm p-2"
+          placeholder="Ex: Prata 3, Ouro IV"
+        />
+      </div>
 
-      <RankSelect
-        label="Rank atual"
-        value={currentRank}
-        onChange={(e) => setCurrentRank(e.target.value)}
-      />
+      {/* Campo Rank Desejado */}
+      <div>
+        <label htmlFor="desiredRank" className="block text-sm font-medium text-gray-300">Rank Desejado</label>
+        <input
+          type="text"
+          id="desiredRank"
+          name="desiredRank"
+          value={formData.desiredRank}
+          onChange={handleChange}
+          required
+          className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm p-2"
+          placeholder="Ex: Platina 1, Diamante"
+        />
+      </div>
 
-      <RankSelect
-        label="Rank desejado"
-        value={desiredRank}
-        onChange={(e) => setDesiredRank(e.target.value)}
-      />
+      {/* Campo Descrição (Opcional) */}
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-300">Descrição (Opcional)</label>
+        <textarea
+          id="description"
+          name="description"
+          rows={4}
+          value={formData.description}
+          onChange={handleChange}
+          className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm p-2"
+          placeholder="Detalhes adicionais sobre o boost, horários preferidos, etc."
+        ></textarea>
+      </div>
 
-      <textarea
-        className="input"
-        placeholder="Descrição (opcional)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-
-      <button type="submit" className="submit-button" disabled={isSubmitting}>
-        {isSubmitting ? 'Enviando...' : 'Publicar Pedido'}
-      </button>
+      {/* Botão de Envio */}
+      <div className="flex justify-center">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Enviando...' : 'Fazer Pedido de Boost'}
+        </button>
+      </div>
     </form>
   );
 }
