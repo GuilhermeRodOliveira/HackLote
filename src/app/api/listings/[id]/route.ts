@@ -1,5 +1,6 @@
+// app/api/listings/[id]/route.ts
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '../../../../utils/prisma'; // Confirme o caminho
+import { prisma } from '../../../../utils/prisma'; // Confirme o caminho, geralmente é @/lib/prisma ou similar
 
 // Endpoint GET para buscar uma única listagem pelo ID
 export async function GET(
@@ -7,8 +8,7 @@ export async function GET(
   { params }: { params: { id: string } } // O ID da listagem virá nos parâmetros da URL
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params);
-    const { id } = resolvedParams; // Obtém o ID da listagem da URL
+    const { id } = params; // Obtém o ID da listagem da URL diretamente
 
     if (!id) {
       return NextResponse.json({ error: 'ID da listagem não fornecido.' }, { status: 400 });
@@ -20,17 +20,16 @@ export async function GET(
         id: id,
       },
       include: {
-        // Inclui as informações do vendedor
+        // Inclui as informações do vendedor, incluindo o 'id' que é crucial para a verificação
         seller: {
           select: {
-            id: true,
+            id: true, // Garanta que o ID do vendedor seja selecionado
             usuario: true,
             email: true,
             nome: true,
           },
         },
       },
-      // REMOVIDO: orderBy: { createdAt: 'desc' }, // << NÃO USAR 'orderBy' com 'findUnique'
     });
 
     if (!listing) {

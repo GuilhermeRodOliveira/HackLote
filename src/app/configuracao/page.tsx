@@ -5,9 +5,13 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-// IMPORTAÇÕES CORRIGIDAS AQUI!
-import ProfileSettings from '../../components/settings/ProfileSettings/ProfileSettings'; // << CORRIGIDO! Adicionado /ProfileSettings
-import SecuritySettings from '../../components/settings/Security/SecuritySettings';   // << CORRIGIDO! Adicionado /SecuritySettings
+// Importe seus componentes de configurações aqui
+import ProfileSettings from '../../components/settings/ProfileSettings/ProfileSettings'; 
+// CORRIGIDO: Caminho para SecuritySettings.tsx
+import SecuritySettings from '../../components/settings/security/SecuritySettings'; 
+import BoostNotificationSettings from '../../components/BoostNotificationSettings/BoostNotificationSettings'; 
+// import PrivacySettings from '../../components/settings/PrivacySettings'; 
+// import InterfaceSettings from '../../components/settings/InterfaceSettings'; 
 
 export default function ConfiguracaoPage() {
   const router = useRouter();
@@ -17,7 +21,7 @@ export default function ConfiguracaoPage() {
   const navItems = [
     { id: 'profile', name: 'Perfil', component: ProfileSettings },
     { id: 'security', name: 'Segurança', component: SecuritySettings }, 
-    { id: 'notifications', name: 'Notificações', component: null /* NotificationSettings */ },
+    { id: 'notifications', name: 'Notificações', component: BoostNotificationSettings }, 
     { id: 'privacy', name: 'Privacidade', component: null /* PrivacySettings */ },
     { id: 'interface', name: 'Interface', component: null /* InterfaceSettings */ },
   ];
@@ -25,7 +29,7 @@ export default function ConfiguracaoPage() {
   return (
     <div className="min-h-[calc(100vh-80px)] bg-[#0f0f1a] text-white py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-yellow-400">Configurações da Conta</h1>
+        <h1 className="text-3xl font-bold mb-8 text-yellow-400 text-center">Configurações da Conta</h1>
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Menu de Navegação Lateral */}

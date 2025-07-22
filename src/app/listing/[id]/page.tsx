@@ -1,10 +1,13 @@
+// app/listing/[id]/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react'; // Adicionado useContext
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+import { AuthContext } from '@/context/AuthContext'; // IMPORTA SEU AUTH CONTEXT AQUI
 
 // Interface para o objeto Listing (deve corresponder ao seu modelo Prisma)
 interface Listing {
@@ -16,23 +19,29 @@ interface Listing {
   subCategory: string;
   imageUrl?: string | null;
   attributes?: Record<string, any> | null; // Objeto JSON para atributos
-  sellerId: string;
+  sellerId: string; // Este campo é crucial para a verificação
   seller: { // Dados do vendedor incluídos na busca
-    id: string;
+    id: string; // O ID do vendedor é essencial
     usuario?: string;
     email: string;
     nome?: string;
   };
   createdAt: string;
   updatedAt: string;
+  game?: string; // Incluído caso você adicione o campo 'game' na listagem
 }
 
 export default function ListingDetailsPage() {
-  const { id } = useParams(); // Hook do Next.js para obter parâmetros da URL (o ID da listagem)
+  const { id } = useParams();
   const router = useRouter();
+  // Use seu próprio AuthContext
+  const { user: currentUser, loading: authLoading } = useContext(AuthContext); 
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // O ID do usuário logado virá do seu AuthContext
+  const currentUserId = currentUser?.id; 
 
   useEffect(() => {
     if (!id) {
@@ -44,7 +53,6 @@ export default function ListingDetailsPage() {
 
     const fetchListingDetails = async () => {
       try {
-        // Chama o novo endpoint GET para uma única listagem pelo ID
         const res = await fetch(`/api/listings/${id}`); 
         const data = await res.json();
 
@@ -64,9 +72,38 @@ export default function ListingDetailsPage() {
     };
 
     fetchListingDetails();
-  }, [id]); // Dependência: refaz a busca se o ID da URL mudar
+  }, [id]);
 
-  if (loading) {
+  // Garanta que isSeller seja sempre um boolean
+  const isSeller = Boolean(listing && currentUserId && listing.sellerId === currentUserId);
+
+  const handlePurchaseClick = () => {
+    // Verifique se 'listing' não é nulo antes de prosseguir
+    if (!listing) { 
+        toast.error('Detalhes da listagem ainda não carregados.');
+        return;
+    }
+
+    // Verifique se o usuário está logado antes de tentar comprar
+    if (!currentUserId) {
+      toast.error('Você precisa estar logado para comprar.');
+      router.push('/login'); // Redireciona para o login
+      return;
+    }
+
+    if (isSeller) {
+      toast.error('Você não pode comprar um item que você mesmo listou.');
+      return;
+    }
+    
+    // Lógica para iniciar o processo de compra
+    toast.info('Redirecionando para o processo de compra...');
+    console.log(`Usuário ${currentUserId} tentando comprar a listagem ${listing.id}`);
+    // Exemplo: router.push(`/checkout?listingId=${listing.id}`);
+  };
+
+  // Ajuste a condição de carregamento para incluir o carregamento do AuthContext
+  if (loading || authLoading) { 
     return (
       <div className="min-h-screen flex items-center justify-center text-white text-xl">
         Carregando detalhes da listagem...
@@ -83,7 +120,7 @@ export default function ListingDetailsPage() {
     );
   }
 
-  if (!listing) {
+  if (!listing) { 
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-400 text-xl">
         Listagem não encontrada.
@@ -93,7 +130,7 @@ export default function ListingDetailsPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8">
-      <div className="content-box"> {/* Aplica a classe content-box para o contêiner principal */}
+      <div className="content-box">
         <h1 className="text-3xl font-bold text-blue-400 mb-4">{listing.title}</h1>
         
         {listing.imageUrl ? (
@@ -105,7 +142,7 @@ export default function ListingDetailsPage() {
               objectFit="cover"
               className="rounded-lg"
               onError={(e) => {
-                e.currentTarget.src = 'https://placehold.co/600x400/4B5563/FFFFFF?text=Sem+Imagem'; // Fallback
+                e.currentTarget.src = 'https://placehold.co/600x400/4B5563/FFFFFF?text=Sem+Imagem';
               }}
             />
           </div>
@@ -128,6 +165,12 @@ export default function ListingDetailsPage() {
             <p className="text-gray-400 text-sm">Subcategoria:</p>
             <p className="text-white text-base font-medium">{listing.subCategory}</p>
           </div>
+          {listing.game && (
+            <div>
+              <p className="text-gray-400 text-sm">Jogo:</p>
+              <p className="text-white text-base font-medium">{listing.game}</p>
+            </div>
+          )}
           <div>
             <p className="text-gray-400 text-sm">Vendedor:</p>
             <p className="text-white text-base font-medium">{listing.seller.usuario || listing.seller.email}</p>
@@ -153,8 +196,16 @@ export default function ListingDetailsPage() {
 
         <div className="flex justify-between items-center mt-6 p-4 bg-gray-700 rounded-lg">
           <span className="text-4xl font-bold text-green-400">R$ {listing.price.toFixed(2)}</span>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-            Comprar Agora
+          <button 
+            onClick={handlePurchaseClick}
+            disabled={isSeller} 
+            className={`font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform ${
+              isSeller 
+                ? 'bg-gray-600 text-gray-300 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105'
+            }`}
+          >
+            {isSeller ? 'Você não pode comprar seu próprio anúncio' : 'Comprar Agora'}
           </button>
         </div>
       </div>

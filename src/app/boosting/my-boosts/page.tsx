@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
-import { AuthContext } from '@/context/AuthContext'; // Importa o AuthContext para verificar autenticação
-import { useRouter } from 'next/navigation'; // Para redirecionamento
-import { toast } from 'react-hot-toast'; // Para notificações
+import { AuthContext } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast'; // Importe toast do 'react-hot-toast' ou 'react-toastify'
 
 // Interfaces para os dados esperados da API
 interface UserInfo {
@@ -13,7 +13,7 @@ interface UserInfo {
   usuario?: string;
   nome?: string;
   email: string;
-  // profilePictureUrl?: string; // Opcional: se quiser exibir o avatar do criador do pedido
+  // profilePictureUrl?: string; // Adicione se quiser usar
 }
 
 interface BoostBid {
@@ -39,64 +39,58 @@ export default function MyBoostsPage() {
   const router = useRouter();
   const { user: currentUser, loading: authLoading } = useContext(AuthContext);
 
-  const [myBoostRequests, setMyBoostRequests] = useState<BoostRequest[]>([]); // Estado para armazenar a lista de pedidos de boost
-  const [loading, setLoading] = useState(true); // Estado para controlar o carregamento dos pedidos
-  const [error, setError] = useState<string | null>(null); // Estado para armazenar mensagens de erro
+  const [myBoostRequests, setMyBoostRequests] = useState<BoostRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Efeito para buscar os pedidos de boost do usuário logado
   useEffect(() => {
-    console.log('useEffect em MyBoostsPage: currentUser:', currentUser, 'authLoading:', authLoading);
+    // console.log('useEffect em MyBoostsPage: currentUser:', currentUser, 'authLoading:', authLoading);
 
     async function fetchMyBoostRequests() {
-      if (!currentUser) { // Só busca se o usuário estiver logado
-        console.log('MyBoostsPage: Usuário não logado, pulando busca de pedidos.');
-        setLoading(false); // Finaliza o carregamento se não há usuário
+      if (!currentUser) {
+        // console.log('MyBoostsPage: Usuário não logado, pulando busca de pedidos.');
+        setLoading(false);
         return;
       }
       
-      setLoading(true); // Inicia o carregamento
-      setError(null); // Limpa erros anteriores
-      console.log('MyBoostsPage: Iniciando fetch para /api/user/boost-requests');
+      setLoading(true);
+      setError(null);
+      // console.log('MyBoostsPage: Iniciando fetch para /api/user/boost-requests');
 
       try {
-        const res = await fetch('/api/user/boost-requests'); // Chama a API que busca os pedidos do usuário logado
+        const res = await fetch('/api/user/boost-requests');
         if (res.ok) {
           const data = await res.json();
-          console.log('MyBoostsPage: Dados da API recebidos:', data);
+          // console.log('MyBoostsPage: Dados da API recebidos:', data);
           setMyBoostRequests(data.myBoostRequests || []);
         } else {
           const errorData = await res.json();
-          console.error('MyBoostsPage: Erro na resposta da API:', errorData);
+          // console.error('MyBoostsPage: Erro na resposta da API:', errorData);
           setError(errorData.error || 'Falha ao carregar seus pedidos de boost.');
           toast.error(errorData.error || 'Falha ao carregar seus pedidos de boost.');
         }
       } catch (err) {
-        console.error('MyBoostsPage: Erro de rede ao buscar meus pedidos de boost:', err);
+        // console.error('MyBoostsPage: Erro de rede ao buscar meus pedidos de boost:', err);
         setError('Erro de conexão ao carregar seus pedidos de boost.');
         toast.error('Erro de conexão ao carregar seus pedidos de boost.');
       } finally {
-        setLoading(false); // Finaliza o carregamento
-        console.log('MyBoostsPage: Finalizou o carregamento.');
+        setLoading(false);
+        // console.log('MyBoostsPage: Finalizou o carregamento.');
       }
     }
 
-    // Chama fetchBoostRequests apenas após o AuthContext terminar de carregar E se houver um currentUser
-    // ou se não houver currentUser mas o authLoading já terminou (para exibir "não logado" ou redirecionar)
     if (!authLoading) {
       fetchMyBoostRequests();
     }
-  }, [currentUser, authLoading]); // Dependências: currentUser e authLoading
+  }, [currentUser, authLoading]);
 
-  // Redireciona se o usuário não estiver logado e o AuthContext não estiver carregando
   useEffect(() => {
     if (!authLoading && !currentUser) {
-      console.log('MyBoostsPage: Redirecionando para /login (usuário não autenticado).');
+      // console.log('MyBoostsPage: Redirecionando para /login (usuário não autenticado).');
       router.push('/login');
     }
   }, [currentUser, authLoading, router]);
 
-
-  // Exibe estados de carregamento e erro
   if (loading || authLoading) {
     return (
       <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 bg-[#0f0f1a] text-white flex items-center justify-center">
@@ -116,7 +110,6 @@ export default function MyBoostsPage() {
     );
   }
 
-  // Se o usuário não estiver logado (e não estiver mais carregando)
   if (!currentUser) {
     return null; // Redirecionamento já foi acionado pelo useEffect acima
   }
@@ -126,13 +119,27 @@ export default function MyBoostsPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-8 text-yellow-400 text-center">Meus Boostings</h1>
 
-        {/* Botão "Fazer Novo Pedido de Boosting" */}
-        <div className="flex justify-center mb-8">
+        {/* NOVOS BOTÕES AQUI */}
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
           <Link href="/boosting/create" passHref>
             <button
-              className="py-3 px-8 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+              className="py-3 px-6 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition w-full sm:w-auto"
             >
               + Fazer Novo Pedido de Boosting
+            </button>
+          </Link>
+          <Link href="\components\BoostNotificationSettings" passHref>
+            <button
+              className="py-3 px-6 bg-yellow-600 text-white rounded-lg font-semibold hover:bg-yellow-700 transition w-full sm:w-auto"
+            >
+              ⚙️ Configurar Meus Serviços de Boost
+            </button>
+          </Link>
+          <Link href="/boosting/explore-requests" passHref> {/* Assumindo que você terá uma página para boosters verem pedidos */}
+            <button
+              className="py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition w-full sm:w-auto"
+            >
+              🔍 Explorar Pedidos de Boosting
             </button>
           </Link>
         </div>
@@ -158,7 +165,7 @@ export default function MyBoostsPage() {
                   )}
                   <div className="mt-4 flex justify-end">
                     <Link 
-                      href={`/boosting/matches/${request.id}`} // Link para a página de detalhes do pedido
+                      href={`/boosting/matches/${request.id}`}
                       className="py-2 px-4 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold transition"
                     >
                       Ver Detalhes e Lances

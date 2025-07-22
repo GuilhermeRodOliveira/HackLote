@@ -2,8 +2,9 @@
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 
+
 // Interface para o objeto User, definindo suas propriedades
-interface User {
+export interface User {
   id: string;
   usuario?: string; // Nome de usuário opcional
   email: string;

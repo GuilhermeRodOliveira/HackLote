@@ -93,11 +93,19 @@ export default function MarketplacePage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h1 className="text-4xl font-bold text-yellow-400">Marketplace</h1>
-          <Link href="/create-listing">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-              Postar/Publicar Novo Serviço
-            </button>
-          </Link>
+          {/* Container para os botões "Ver minhas publicações" e "Postar Novo Serviço" */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/minhas-listagens"> {/* CAMINHO E TEXTO AJUSTADOS AQUI */}
+              <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                Ver minhas publicações
+              </button>
+            </Link>
+            <Link href="/create-listing">
+              <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                Postar/Publicar Novo Serviço
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* Seção de Filtros */}
