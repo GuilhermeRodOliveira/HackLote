@@ -1,14 +1,18 @@
+// src/context/AuthContext.tsx
 'use client';
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-
 
 // Interface para o objeto User, definindo suas propriedades
 export interface User {
   id: string;
   usuario?: string; // Nome de usuário opcional
   email: string;
-  name?: string; // Nome completo opcional
+  nome?: string; // Nome completo opcional (renomeado de 'name' para 'nome' para consistência)
+  bio?: string; // Adicionado para consistência com perfil
+  profilePictureUrl?: string; // Adicionado para consistência com perfil
+  country?: string; // Adicionado para consistência com perfil
+  // Adicione outros campos do perfil que você queira que estejam disponíveis no contexto
 }
 
 // Interface para o tipo do contexto de autenticação
@@ -41,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch('/api/me'); // Faz uma requisição para sua API /api/me
       if (res.ok) {
         const json = await res.json();
+        // Certifique-se de que a API /api/me retorna todos os campos do perfil necessários
         setUser(json.user); // Define o usuário com os dados recebidos da API
       } else {
         setUser(null); // Se a resposta não for ok, define usuário como null

@@ -7,11 +7,9 @@ import Link from 'next/link';
 
 // Importe seus componentes de configurações aqui
 import ProfileSettings from '../../components/settings/ProfileSettings/ProfileSettings'; 
-// CORRIGIDO: Caminho para SecuritySettings.tsx
 import SecuritySettings from '../../components/settings/security/SecuritySettings'; 
-import BoostNotificationSettings from '../../components/BoostNotificationSettings/BoostNotificationSettings'; 
-// import PrivacySettings from '../../components/settings/PrivacySettings'; 
-// import InterfaceSettings from '../../components/settings/InterfaceSettings'; 
+import GeneralNotificationSettings from '../../components/settings/GeneralNotificationSettings/GeneralNotificationSettings'; 
+
 
 export default function ConfiguracaoPage() {
   const router = useRouter();
@@ -21,7 +19,8 @@ export default function ConfiguracaoPage() {
   const navItems = [
     { id: 'profile', name: 'Perfil', component: ProfileSettings },
     { id: 'security', name: 'Segurança', component: SecuritySettings }, 
-    { id: 'notifications', name: 'Notificações', component: BoostNotificationSettings }, 
+    // AGORA, a aba 'Notificações' aponta para as configurações GERAIS
+    { id: 'notifications', name: 'Notificações', component: GeneralNotificationSettings }, 
     { id: 'privacy', name: 'Privacidade', component: null /* PrivacySettings */ },
     { id: 'interface', name: 'Interface', component: null /* InterfaceSettings */ },
   ];

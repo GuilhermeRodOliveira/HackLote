@@ -15,17 +15,21 @@ const config = {
         sans: ['var(--font-poppins)', 'sans-serif'],
         poppins: ['var(--font-poppins)', 'sans-serif'],
       },
+      // Habilitando as cores dinâmicas via variáveis CSS
       colors: {
-        // Cores da Paleta "Eficiência Dinâmica" - Opção A (Ciano + Verde)
-        primary: '#22D3EE',    // Ciano - Principal acento
-        secondary: '#10B981',  // Verde Esmeralda - Acento secundário
+        // Cores base do tema
+        backgroundPrimary: 'var(--bg-primary)',
+        backgroundSecondary: 'var(--bg-secondary)',
+        textPrimary: 'var(--text-primary)',
+        textSecondary: 'var(--text-secondary)',
+        borderColor: 'var(--border-color)', // Para bordas e elementos sutis
+        
+        // Cores de Acento das paletas
+        accent1: 'var(--accent-1)', // Dourado antigo (escuro) / Azul escuro (claro)
+        accent1Shade: 'var(--accent-1-shade)', // Para o hover de accent1
+        accent2: 'var(--accent-2)', // Borgonha escuro (escuro) / Azul claro (claro)
 
-        // Cores Neutras
-        backgroundLight: '#F8FAFC', // Fundo principal
-        textDark: '#1F2937',     // Texto principal
-        textMuted: '#9CA3AF',    // Texto secundário, bordas
-
-        // Cores de Status (Opcional: você pode manter os padrões do Tailwind ou usar estas)
+        // Se você ainda precisar de cores de status fixas, pode mantê-las aqui
         statusError: '#EF4444',
         statusSuccess: '#22C55E',
       },

@@ -1,11 +1,11 @@
+// src/app/perfil/page.tsx
 'use client';
 
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
 import { AuthContext } from '@/context/AuthContext';
-import '@/app/login/styles.css'; // Reutilizar estilos para inputs e botões
 import styles from './Perfil.module.css'; // Para estilos específicos do perfil
 
 // Interface para o objeto UserProfile (deve corresponder ao que a API retorna)
@@ -16,6 +16,7 @@ interface UserProfile {
   email: string;
   bio?: string;
   profilePictureUrl?: string;
+  country?: string; // Adicionado para exibir no perfil
   createdAt: string;
 }
 
@@ -42,7 +43,7 @@ interface Review {
 }
 
 // URL da imagem de perfil padrão
-const DEFAULT_PROFILE_PICTURE = 'https://cdn-icons-png.flaticon.com/512/1695/1695213.png';
+const DEFAULT_PROFILE_PICTURE = '/img/avatar.png'; // Usar caminho relativo para public
 
 export default function PerfilPage() {
   const { user, loading: authLoading } = useContext(AuthContext);
@@ -50,19 +51,9 @@ export default function PerfilPage() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true); // Para carregamento inicial do perfil
-  const [isSaving, setIsSaving] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true); // Flag para a carga inicial
-  
-  const [editedNome, setEditedNome] = useState('');
-  const [editedUsuario, setEditedUsuario] = useState('');
-  const [editedBio, setEditedBio] = useState('');
-  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
-  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
 
-  const [reviewsReceived, setReviewsReceived] = useState<Review[]>([]); // NOVO: Avaliações recebidas
-  const [reviewsGiven, setReviewsGiven] = useState<Review[]>([]);     // NOVO: Avaliações dadas
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [reviewsReceived, setReviewsReceived] = useState<Review[]>([]); // Avaliações recebidas
+  const [reviewsGiven, setReviewsGiven] = useState<Review[]>([]);     // Avaliações dadas
 
   // Efeito para buscar o perfil e as avaliações na montagem
   useEffect(() => {
@@ -75,205 +66,56 @@ export default function PerfilPage() {
         return;
       }
 
+      setLoading(true); // Inicia o carregamento
       try {
-        // Busca o perfil
-        const profileRes = await fetch(`/api/users/${user.id}/profile`);
+        // Busca o perfil do usuário logado
+        // A API /api/user/settings já obtém o userId do token, não precisa de query param
+        const profileRes = await fetch(`/api/user/settings`); 
         const profileData = await profileRes.json();
 
         if (profileRes.ok) {
-          const fetchedProfile = profileData.profile;
-          setProfile(fetchedProfile);
-          setEditedNome(fetchedProfile.nome || '');
-          setEditedUsuario(fetchedProfile.usuario || '');
-          setEditedBio(fetchedProfile.bio || '');
-          setProfilePicturePreview(fetchedProfile.profilePictureUrl || DEFAULT_PROFILE_PICTURE);
-          setInitialLoad(false); // Desativa a flag de carga inicial após carregar o perfil
+          setProfile(profileData); // A API de settings já retorna o objeto do usuário diretamente
         } else {
-          toast.error(profileData.error || 'Erro ao carregar perfil.');
+          toast.error(profileData.message || 'Erro ao carregar perfil.');
+          console.error("Erro ao carregar perfil:", profileData);
         }
 
-        // Busca avaliações recebidas
+        // TODO: Implementar APIs para buscar avaliações (se ainda não existirem)
+        // Por enquanto, estas chamadas podem falhar ou retornar vazias se as APIs não estiverem prontas.
+        // Exemplo de como as APIs de reviews deveriam ser:
+        // /api/users/[userId]/reviews-received
+        // /api/users/[userId]/reviews-given
+
+        // Busca avaliações recebidas (ajuste a URL da API conforme necessário)
         const receivedRes = await fetch(`/api/users/${user.id}/reviews-received`);
         const receivedData = await receivedRes.json();
         if (receivedRes.ok) {
-          setReviewsReceived(receivedData.reviews);
+          setReviewsReceived(receivedData.reviews || []);
         } else {
-          toast.error(receivedData.error || 'Erro ao carregar avaliações recebidas.');
+          console.error('Erro ao carregar avaliações recebidas:', receivedData.error || receivedRes.statusText);
+          // toast.error(receivedData.error || 'Erro ao carregar avaliações recebidas.'); // Evitar muitos toasts
         }
 
-        // Busca avaliações dadas
+        // Busca avaliações dadas (ajuste a URL da API conforme necessário)
         const givenRes = await fetch(`/api/users/${user.id}/reviews-given`);
         const givenData = await givenRes.json();
         if (givenRes.ok) {
-          setReviewsGiven(givenData.reviews);
+          setReviewsGiven(givenData.reviews || []);
         } else {
-          toast.error(givenData.error || 'Erro ao carregar avaliações dadas.');
+          console.error('Erro ao carregar avaliações dadas:', givenData.error || givenRes.statusText);
+          // toast.error(givenData.error || 'Erro ao carregar avaliações dadas.'); // Evitar muitos toasts
         }
 
       } catch (err) {
         console.error('Erro de rede ao buscar perfil e avaliações:', err);
         toast.error('Erro de rede. Verifique sua conexão.');
       } finally {
-        setLoading(false);
+        setLoading(false); // Finaliza o carregamento
       }
     };
 
     fetchProfileAndReviews();
-  }, [user, authLoading, router]);
-
-  // Efeito para auto-salvar as alterações
-  useEffect(() => {
-    if (loading || authLoading || !user || !profile || initialLoad || isSaving) {
-        return;
-    }
-
-    const handler = setTimeout(async () => {
-      const hasChanges = 
-        (editedNome || '') !== (profile.nome || '') ||
-        (editedUsuario || '') !== (profile.usuario || '') ||
-        (editedBio || '') !== (profile.bio || '') ||
-        profilePictureFile !== null ||
-        (profilePicturePreview === null && profile.profilePictureUrl !== null) ||
-        (profilePicturePreview === DEFAULT_PROFILE_PICTURE && profile.profilePictureUrl !== DEFAULT_PROFILE_PICTURE && profile.profilePictureUrl !== null);
-
-      if (hasChanges) {
-        await handleSaveProfile();
-      }
-    }, 1000);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [editedNome, editedUsuario, editedBio, profilePictureFile, profilePicturePreview, user, profile, loading, authLoading, initialLoad, isSaving]);
-
-  // Função centralizada para enviar as alterações para o backend
-  const handleSaveProfile = async () => {
-    setIsSaving(true);
-    setLoading(true);
-
-    const dataToSend: {
-      nome?: string;
-      usuario?: string;
-      bio?: string;
-      profilePictureBase64?: string | null;
-    } = {};
-
-    if (editedNome !== (profile?.nome || '')) dataToSend.nome = editedNome;
-    if (editedUsuario !== (profile?.usuario || '')) dataToSend.usuario = editedUsuario;
-    if (editedBio !== (profile?.bio || '')) dataToSend.bio = editedBio;
-
-    let profilePictureBase64: string | null | undefined = undefined;
-    if (profilePictureFile) {
-      profilePictureBase64 = await new Promise<string | null>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(profilePictureFile);
-      });
-
-      if (!profilePictureBase64) {
-        toast.error('Erro ao ler a imagem. Tente novamente.');
-        setIsSaving(false);
-        setLoading(false);
-        return;
-      }
-      dataToSend.profilePictureBase64 = profilePictureBase64;
-    } else if (profilePicturePreview === null && profile?.profilePictureUrl) {
-        profilePictureBase64 = null;
-        dataToSend.profilePictureBase64 = profilePictureBase64;
-    } else if (profilePicturePreview === DEFAULT_PROFILE_PICTURE && profile?.profilePictureUrl !== DEFAULT_PROFILE_PICTURE && profile?.profilePictureUrl !== null) {
-        profilePictureBase64 = null;
-        dataToSend.profilePictureBase64 = profilePictureBase64;
-    } else if (profilePicturePreview === profile?.profilePictureUrl) {
-        // Se o preview é igual à URL original, não envia o campo para o backend
-        // dataToSend.profilePictureBase64 permanece undefined
-    }
-
-    if (Object.keys(dataToSend).length === 0) {
-        setIsSaving(false);
-        setLoading(false);
-        return;
-    }
-
-    try {
-      const res = await fetch(`/api/users/${user?.id}/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSend),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        const updatedProfileData = data.profile;
-        setProfile(updatedProfileData);
-        setProfilePictureFile(null);
-        setProfilePicturePreview(updatedProfileData.profilePictureUrl || DEFAULT_PROFILE_PICTURE);
-        
-        // Atualiza o estado original após um salvamento bem-sucedido
-        setOriginalProfileState({
-            nome: updatedProfileData.nome || '',
-            usuario: updatedProfileData.usuario || '',
-            bio: updatedProfileData.bio || '',
-            profilePictureUrl: updatedProfileData.profilePictureUrl || DEFAULT_PROFILE_PICTURE,
-        });
-
-        toast.success(data.message || 'Perfil atualizado automaticamente!');
-      } else {
-        toast.error(data.error || 'Erro ao atualizar perfil.');
-      }
-    } catch (err) {
-      console.error('Erro de rede ao atualizar perfil:', err);
-      toast.error('Erro de rede. Verifique sua conexão.');
-    } finally {
-      setIsSaving(false);
-      setLoading(false);
-    }
-  };
-
-  // Função para lidar com a seleção de arquivo
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files ? e.target.files[0] : null;
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('Por favor, selecione um arquivo de imagem válido.');
-        setProfilePictureFile(null);
-        setProfilePicturePreview(profile?.profilePictureUrl || DEFAULT_PROFILE_PICTURE);
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) { // Limite de 2MB
-        toast.error('A imagem deve ter no máximo 2MB.');
-        setProfilePictureFile(null);
-        setProfilePicturePreview(profile?.profilePictureUrl || DEFAULT_PROFILE_PICTURE);
-        return;
-      }
-      setProfilePictureFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePicturePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setProfilePictureFile(null);
-      setProfilePicturePreview(profile?.profilePictureUrl || DEFAULT_PROFILE_PICTURE);
-    }
-  };
-
-  // Função para remover a imagem (clicando no botão)
-  const handleRemoveImage = () => {
-    setProfilePictureFile(null);
-    setProfilePicturePreview(null); // Define o preview como null para indicar remoção
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  // Função para abrir o seletor de arquivos ao clicar na imagem
-  const handleProfilePictureClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
+  }, [user, authLoading, router]); // Dependências
 
   // Função para renderizar estrelas
   const renderStars = (rating: number) => {
@@ -289,92 +131,67 @@ export default function PerfilPage() {
     return '...' + username.slice(-3);
   };
 
+  // Função para formatar a data de forma consistente (evita hidratação)
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      // Use toLocaleDateString com opções para garantir consistência entre servidor/cliente
+      // ou formate manualmente como DD/MM/YYYY
+      return date.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    } catch (e) {
+      console.error("Erro ao formatar data:", dateString, e);
+      return dateString; // Retorna a string original em caso de erro
+    }
+  };
+
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] text-white">
         <p>Carregando perfil...</p>
       </div>
     );
   }
 
   if (!user || !profile) {
-    return null;
+    // Se não há usuário ou perfil após o carregamento, redireciona para login
+    router.push('/login');
+    return null; 
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-white mb-6 text-center">Meu Perfil</h1>
 
       <div className="content-box p-6">
         <div className="flex flex-col items-center mb-6">
           <div className={styles['profile-picture-container']}>
             <Image
-              src={profilePicturePreview || DEFAULT_PROFILE_PICTURE}
+              src={profile.profilePictureUrl || DEFAULT_PROFILE_PICTURE}
               alt="Foto de Perfil"
               width={120}
               height={120}
-              className="rounded-full object-cover cursor-pointer"
-              onClick={handleProfilePictureClick}
+              className="rounded-full object-cover"
+              onError={(e) => { // Adicionado onError para fallback de imagem
+                e.currentTarget.src = DEFAULT_PROFILE_PICTURE;
+              }}
             />
           </div>
           <h2 className="text-2xl font-semibold text-white mt-4">{profile.usuario || profile.nome || 'Usuário'}</h2>
           <p className="text-gray-400 text-sm">{profile.email}</p>
-        </div>
-
-        {/* Formulário de Edição - Sempre visível, sem modo de edição explícito */}
-        <form className="space-y-4">
-          <div className="input-box">
-            <label htmlFor="nome" className="block text-sm font-medium text-gray-400 mb-1">Nome Completo</label>
-            <input
-              type="text"
-              id="nome"
-              value={editedNome}
-              onChange={(e) => setEditedNome(e.target.value)}
-              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="input-box">
-            <label htmlFor="usuario" className="block text-sm font-medium text-gray-400 mb-1">Nome de Usuário</label>
-            <input
-              type="text"
-              id="usuario"
-              value={editedUsuario}
-              onChange={(e) => setEditedUsuario(e.target.value)}
-              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="input-box">
-            <label htmlFor="bio" className="block text-sm font-medium text-gray-400 mb-1">Biografia</label>
-            <textarea
-              id="bio"
-              value={editedBio}
-              onChange={(e) => setEditedBio(e.target.value)}
-              rows={4}
-              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Fale um pouco sobre você..."
-            />
-          </div>
-          {/* Input de arquivo para foto de perfil */}
-          <input
-            type="file"
-            id="profilePictureFile"
-            accept="image/*" // Aceita apenas arquivos de imagem
-            onChange={handleFileChange}
-            ref={fileInputRef} // Atribui a referência
-            style={{ display: 'none' }} // Oculta o input
-          />
-          {profilePicturePreview && profilePicturePreview !== DEFAULT_PROFILE_PICTURE && ( // Mostra o botão remover apenas se não for a imagem padrão
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="text-red-400 hover:text-red-500 text-sm py-2 px-4 rounded-md border border-red-400"
-              >
-                Remover Imagem
-              </button>
-            </div>
+          {profile.country && (
+            <p className="text-gray-400 text-sm mt-1">País: {profile.country}</p>
           )}
-        </form>
+          {profile.bio && (
+            <p className="text-gray-300 text-center mt-4 max-w-prose">{profile.bio}</p>
+          )}
+          <button
+            onClick={() => router.push('/configuracao?tab=profile')}
+            className="mt-6 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-300"
+          >
+            Editar Perfil
+          </button>
+        </div>
       </div>
 
       {/* Seção de Avaliações Recebidas */}
@@ -387,7 +204,6 @@ export default function PerfilPage() {
             {reviewsReceived.map(review => (
               <div key={review.id} className="bg-gray-700 p-4 rounded-lg border border-gray-600">
                 <div className="flex items-center justify-between mb-2">
-                  {/* NOVO: Exibindo apenas as 3 últimas letras do nome de usuário do avaliador */}
                   <span className="font-semibold text-white">
                     Avaliador: {formatUsername(review.reviewer?.usuario || review.reviewer?.nome)}
                   </span>
@@ -397,7 +213,7 @@ export default function PerfilPage() {
                   <p className="text-gray-300 text-sm">{review.comment}</p>
                 )}
                 <p className="text-gray-500 text-xs mt-2">
-                  Em: {new Date(review.createdAt).toLocaleDateString()}
+                  Em: {formatDate(review.createdAt)} {/* Usando a nova função formatDate */}
                 </p>
               </div>
             ))}
@@ -415,7 +231,6 @@ export default function PerfilPage() {
             {reviewsGiven.map(review => (
               <div key={review.id} className="bg-gray-700 p-4 rounded-lg border border-gray-600">
                 <div className="flex items-center justify-between mb-2">
-                  {/* NOVO: Exibindo apenas as 3 últimas letras do nome de usuário do avaliado */}
                   <span className="font-semibold text-white">
                     Avaliado: {formatUsername(review.reviewed?.usuario || review.reviewed?.nome)}
                   </span>
@@ -425,7 +240,7 @@ export default function PerfilPage() {
                   <p className="text-gray-300 text-sm">{review.comment}</p>
                 )}
                 <p className="text-gray-500 text-xs mt-2">
-                  Em: {new Date(review.createdAt).toLocaleDateString()}
+                  Em: {formatDate(review.createdAt)} {/* Usando a nova função formatDate */}
                 </p>
               </div>
             ))}
@@ -434,8 +249,4 @@ export default function PerfilPage() {
       </div>
     </div>
   );
-}
-
-function setOriginalProfileState(arg0: { nome: any; usuario: any; bio: any; profilePictureUrl: any; }) {
-  throw new Error('Function not implemented.');
 }

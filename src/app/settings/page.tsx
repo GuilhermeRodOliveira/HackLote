@@ -3,16 +3,13 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
-import { AuthContext } from '@/context/AuthContext'; // Importe seu AuthContext
+import { AuthContext } from '@/context/AuthContext';
 
-// Interface para as configurações de notificação do usuário
-// Baseado nos campos do seu modelo User no schema.prisma
 interface UserNotificationPreferences {
   receiveMarketingEmails: boolean;
   receiveOrderUpdates: boolean;
   receiveMessageNotifications: boolean;
   receiveInAppNotifications: boolean;
-  // Se houver mais campos de notificação no seu modelo User, adicione aqui
 }
 
 export default function GeneralNotificationSettings() {
@@ -39,8 +36,6 @@ export default function GeneralNotificationSettings() {
 
       setIsLoading(true);
       try {
-        // TODO: Crie uma API para buscar as configurações de notificação gerais do usuário.
-        // Por exemplo: /api/user/notification-settings
         const res = await fetch('/api/user/notification-settings');
         const data = await res.json();
 
@@ -70,10 +65,8 @@ export default function GeneralNotificationSettings() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // TODO: Crie uma API para salvar as configurações de notificação gerais do usuário.
-      // Por exemplo: /api/user/notification-settings (Método PUT ou PATCH)
       const res = await fetch('/api/user/notification-settings', {
-        method: 'PUT', // Ou PATCH, dependendo da sua API
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -103,7 +96,6 @@ export default function GeneralNotificationSettings() {
     );
   }
 
-  // Não precisamos de !user return null aqui, pois o AuthContext ou layout já deve redirecionar.
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg p-6 shadow-lg">
@@ -113,7 +105,6 @@ export default function GeneralNotificationSettings() {
       </p>
 
       <div className="space-y-4">
-        {/* Notificações por E-mail */}
         <div className="flex items-center justify-between py-2 border-b border-gray-700">
           <span className="text-gray-200 text-base flex items-center gap-2">
             <span className="material-symbols-outlined text-xl text-blue-400">mail</span>
@@ -130,7 +121,6 @@ export default function GeneralNotificationSettings() {
           </label>
         </div>
 
-        {/* Notificações de Pedido */}
         <div className="flex items-center justify-between py-2 border-b border-gray-700">
           <span className="text-gray-200 text-base flex items-center gap-2">
             <span className="material-symbols-outlined text-xl text-green-400">local_shipping</span>
@@ -147,7 +137,6 @@ export default function GeneralNotificationSettings() {
           </label>
         </div>
 
-        {/* Notificações de Mensagens */}
         <div className="flex items-center justify-between py-2 border-b border-gray-700">
           <span className="text-gray-200 text-base flex items-center gap-2">
             <span className="material-symbols-outlined text-xl text-orange-400">chat</span>
@@ -164,7 +153,6 @@ export default function GeneralNotificationSettings() {
           </label>
         </div>
 
-        {/* Notificações In-App (Badge/Popups no site) */}
         <div className="flex items-center justify-between py-2">
           <span className="text-gray-200 text-base flex items-center gap-2">
             <span className="material-symbols-outlined text-xl text-yellow-400">notifications</span>

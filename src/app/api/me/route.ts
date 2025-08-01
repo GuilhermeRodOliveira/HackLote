@@ -1,5 +1,7 @@
+// src/app/api/me/route.ts
 import { NextResponse, NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken'; // Importe a biblioteca jsonwebtoken
+import { prisma } from '../../../utils/prisma'; // Importe o Prisma Client
 
 // Defina uma interface para o payload do seu JWT
 interface JwtUserPayload {
@@ -27,23 +29,34 @@ export async function GET(req: NextRequest) {
     let decodedToken: JwtUserPayload; // Tipando decodedToken com a interface
     try {
       // Verifica e decodifica o token usando a mesma chave secreta
-      // Fazendo um cast para JwtUserPayload, pois sabemos o formato do nosso payload
       decodedToken = jwt.verify(token, JWT_SECRET) as JwtUserPayload;
     } catch (jwtError) {
       // Se o token for inválido (expirado, modificado, etc.)
-      console.error('Erro ao verificar token JWT:', jwtError);
+      console.error('Erro ao verificar token JWT em /api/me:', jwtError);
       return NextResponse.json({ error: 'Não autenticado: Token inválido ou expirado.' }, { status: 401 });
     }
 
-    // O token decodificado contém o payload que você definiu no login
-    const userPayload = {
-      id: decodedToken.id,
-      usuario: decodedToken.usuario,
-      email: decodedToken.email,
-      // Adicione outras propriedades se você as incluiu no payload do JWT
-    };
+    // Agora que temos o ID do usuário do token, buscamos os dados completos do perfil no banco de dados
+    const user = await prisma.user.findUnique({
+      where: { id: decodedToken.id },
+      select: {
+        id: true,
+        usuario: true,
+        email: true,
+        nome: true, // Inclua o campo nome
+        bio: true, // Inclua o campo bio
+        profilePictureUrl: true, // Inclua a URL da foto de perfil
+        country: true, // Inclua o campo país
+        // Inclua quaisquer outros campos de perfil que você queira que o frontend tenha acesso imediato
+      },
+    });
 
-    return NextResponse.json({ user: userPayload });
+    if (!user) {
+      return NextResponse.json({ error: 'Usuário não encontrado no banco de dados.' }, { status: 404 });
+    }
+
+    // Retorna o objeto de usuário completo
+    return NextResponse.json({ user: user });
 
   } catch (error) {
     console.error('Erro no endpoint /api/me:', error);

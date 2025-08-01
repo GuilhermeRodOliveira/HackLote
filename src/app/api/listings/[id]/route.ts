@@ -27,6 +27,7 @@ export async function GET(
             usuario: true,
             email: true,
             nome: true,
+            profilePictureUrl: true,
           },
         },
       },

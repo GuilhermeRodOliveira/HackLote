@@ -1,3 +1,4 @@
+// src/app/api/register/route.ts
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '../../../utils/prisma';
 import bcrypt from 'bcryptjs';
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    let { nome, usuario, email, password } = body; // Usar 'let' para poder reatribuir 'email'
+    let { nome, usuario, email, password } = body;
 
     // NOVO: Converter o e-mail para minúsculas para garantir case-insensitivity em todo o processo
     email = email.toLowerCase();
@@ -57,9 +58,8 @@ export async function POST(req: NextRequest) {
     }
     if (!emailDomain || !ALLOWED_EMAIL_DOMAINS.includes(emailDomain.toLowerCase())) {
       console.error('Erro de validação: Domínio de e-mail não permitido.');
-      // ALTERAÇÃO AQUI: Mensagem de erro personalizada
-      return NextResponse.json({ 
-        error: `Não é possível criar conta com esse domínio ${emailDomain}.` 
+      return NextResponse.json({
+        error: `Não é possível criar conta com esse domínio ${emailDomain}.`
       }, { status: 400 });
     }
 
@@ -67,12 +67,12 @@ export async function POST(req: NextRequest) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/\\|`~-]).{8,}$/;
     if (!passwordRegex.test(password)) {
       console.error('Erro de validação: Senha não atende aos requisitos de complexidade.');
-      return NextResponse.json({ 
-        error: 'A senha deve conter pelo menos 8 caracteres, incluindo 1 letra maiúscula, 1 minúscula, 1 número e 1 caractere especial.' 
+      return NextResponse.json({
+        error: 'A senha deve conter pelo menos 8 caracteres, incluindo 1 letra maiúscula, 1 minúscula, 1 número e 1 caractere especial.'
       }, { status: 400 });
     }
 
-    // 4. Verifica se o nome de usuário já está em uso (para evitar duplicatas antes do registro final)
+    // 4. Verifica se o nome de usuário já está em uso na tabela FINAL de usuários
     const existingUserByUsername = await prisma.user.findUnique({ where: { usuario: usuario } });
     if (existingUserByUsername) {
       console.error('Erro de validação: Nome de usuário já em uso.');
@@ -89,11 +89,10 @@ export async function POST(req: NextRequest) {
     // 6. Hash da senha
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 7. Gera e Salva o Código de Verificação e os Dados Temporários
-    const verificationCode = generateVerificationCode(); // GERA O CÓDIGO AQUI
+    // 7. Gera e Salva o Código de Verificação e os Dados Temporários (upsert)
+    const verificationCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Código expira em 10 minutos
 
-    // NOVO LOG: Para verificar os dados antes do upsert
     console.log('Dados para upsert em VerificationCode:', { email, verificationCode, expiresAt, nome, usuario, hashedPassword });
 
     try {
@@ -115,12 +114,10 @@ export async function POST(req: NextRequest) {
           hashedPassword: hashedPassword,
         },
       });
-      // NOVO LOG: Para verificar o resultado do upsert
       console.log('Resultado do upsert em VerificationCode:', upsertResult);
 
     } catch (dbError: any) {
       console.error('Erro no Prisma ao salvar VerificationCode:', dbError);
-      // Retorna um erro específico se o upsert falhar
       return NextResponse.json({ error: `Erro ao salvar dados de verificação: ${dbError.message || 'Erro de banco de dados.'}` }, { status: 500 });
     }
 
@@ -128,14 +125,11 @@ export async function POST(req: NextRequest) {
     const sendEmailRes = await fetch(`${req.nextUrl.origin}/api/send-verification-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // ALTERADO: Passando o verificationCode para o endpoint de envio de e-mail
-        body: JSON.stringify({ email, usuario, verificationCode }), 
+        body: JSON.stringify({ email, usuario, verificationCode }),
     });
 
     if (!sendEmailRes.ok) {
-        // Agora, se sendEmailRes.json() falhar (ex: se o servidor retornar HTML),
-        // o erro será capturado aqui e o erro original será logado.
-        const errorDetails = await sendEmailRes.text(); // Pega o texto da resposta para depuração
+        const errorDetails = await sendEmailRes.text();
         console.error('Falha ao chamar o endpoint de envio de e-mail. Detalhes:', errorDetails);
         return NextResponse.json({ error: 'Erro ao enviar o código de verificação. Tente novamente.' }, { status: 500 });
     }
@@ -143,7 +137,7 @@ export async function POST(req: NextRequest) {
     // Retorna sucesso, informando que o código foi enviado para verificação
     return NextResponse.json({
       message: 'Cadastro iniciado! Um código de verificação foi enviado para o seu e-mail.',
-      email: email,
+      email: email, // Retorna o email para preencher o campo na página de verificação
     }, { status: 200 });
 
   } catch (error) {

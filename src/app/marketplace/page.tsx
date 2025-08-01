@@ -1,8 +1,10 @@
+// src/app/marketplace/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import ListingCard from '@/components/ListingCard/ListingCard'; 
+
 import { useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -14,19 +16,20 @@ interface Listing {
   description: string;
   price: number;
   category: string;
-  subCategory: string;
-  imageUrl?: string | null;
-  attributes?: Record<string, any> | null; // Objeto JSON para atributos
+  subCategory?: string; 
+  imageUrls: string[]; // ALTERADO: Agora espera um array de URLs
+  attributes?: Record<string, any> | null;
   sellerId: string;
-  seller: { // Dados do vendedor incluídos na busca
+  seller: {
     id: string;
     usuario?: string;
     email: string;
     nome?: string;
+    profilePictureUrl?: string; 
   };
-  createdAt: string; // Ou Date, dependendo de como você o manipula
-  updatedAt: string; // Ou Date
-  game?: string; // Adicionado 'game' para exibição e filtro
+  createdAt: string;
+  updatedAt: string;
+  game?: string; 
 }
 
 export default function MarketplacePage() {
@@ -35,37 +38,32 @@ export default function MarketplacePage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Estados para os filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedGame, setSelectedGame] = useState(''); // NOVO: Estado para o filtro de jogo
+  const [selectedGame, setSelectedGame] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
-  // Opções de categorias para o Marketplace (REMOVIDO 'Boosting')
-  const categories = ['Contas', 'Skins', 'Gift Cards', 'Itens']; // Exemplo: Apenas categorias de marketplace
+  const categories = ['Contas', 'Skins', 'Gift Cards', 'Itens'];
 
-  // Lista de jogos suportados (pode ser a mesma do CreateListingPage)
   const supportedGames = [
     'Valorant', 'League of Legends', 'GTA V', 'CS2', 'Fortnite', 'Rainbow Six', 'Rocket League',
   ];
 
   useEffect(() => {
-    // Função para buscar as listagens com filtros
     const fetchListings = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Constrói a URL da API com base nos filtros
         const queryParams = new URLSearchParams();
         if (searchTerm) queryParams.append('search', searchTerm);
         if (selectedCategory) queryParams.append('category', selectedCategory);
-        if (selectedGame) queryParams.append('game', selectedGame); // NOVO: Adiciona filtro de jogo
+        if (selectedGame) queryParams.append('game', selectedGame);
         if (minPrice) queryParams.append('minPrice', minPrice);
         if (maxPrice) queryParams.append('maxPrice', maxPrice);
 
         const url = `/api/listings?${queryParams.toString()}`;
-        console.log('Buscando listagens com URL:', url); // Para depuração
+        console.log('Buscando listagens com URL:', url);
 
         const res = await fetch(url);
         const data = await res.json();
@@ -86,51 +84,57 @@ export default function MarketplacePage() {
     };
 
     fetchListings();
-  }, [searchTerm, selectedCategory, selectedGame, minPrice, maxPrice]); // Refaz a busca quando qualquer filtro muda
+  }, [searchTerm, selectedCategory, selectedGame, minPrice, maxPrice]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-8">
+    <div className="min-h-screen pt-24 pb-8 px-4 sm:px-6 lg:px-8
+                     bg-backgroundPrimary text-textPrimary transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-4xl font-bold text-yellow-400">Marketplace</h1>
-          {/* Container para os botões "Ver minhas publicações" e "Postar Novo Serviço" */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/minhas-listagens"> {/* CAMINHO E TEXTO AJUSTADOS AQUI */}
-              <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                Ver minhas publicações
+          <h1 className="text-3xl sm:text-4xl font-bold text-accent1">Marketplace</h1>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Link href="/minhas-listagens">
+              <button className="py-2 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105
+                                 bg-accent1 hover:bg-accent1-shade text-backgroundPrimary">
+                Minhas Publicações
               </button>
             </Link>
             <Link href="/create-listing">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                Postar/Publicar Novo Serviço
+              <button className="py-2 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105
+                                 bg-accent1 hover:bg-accent1-shade text-backgroundPrimary">
+                Postar Novo Serviço
               </button>
             </Link>
           </div>
         </div>
 
-        {/* Seção de Filtros */}
-        <div className="bg-gray-800 rounded-lg p-6 mb-8 shadow-lg border border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Seção de Filtros - Mais compacta e com cores do tema */}
+        <div className="rounded-lg p-4 mb-8 shadow-lg border grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3
+                         bg-backgroundSecondary border-borderColor">
           {/* Busca por Termo */}
           <div>
-            <label htmlFor="search" className="block text-sm font-medium text-gray-300 mb-1">Buscar</label>
+            <label htmlFor="search" className="block text-sm font-medium text-textSecondary mb-1">Buscar</label>
             <input
               type="text"
               id="search"
               placeholder="Título, descrição..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
+              className="w-full p-2 rounded-md focus:border-accent2 focus:ring-accent2 text-sm
+                         bg-backgroundPrimary border border-borderColor text-textPrimary placeholder-textSecondary"
             />
           </div>
 
           {/* Filtro por Categoria */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1">Categoria</label>
+            <label htmlFor="category" className="block text-sm font-medium text-textSecondary mb-1">Categoria</label>
             <select
               id="category"
+              name="category"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
+              className="w-full p-2 rounded-md focus:border-accent2 focus:ring-accent2 text-sm appearance-none
+                         bg-backgroundPrimary border border-borderColor text-textPrimary"
             >
               <option value="">Todas</option>
               {categories.map((cat) => (
@@ -139,14 +143,16 @@ export default function MarketplacePage() {
             </select>
           </div>
 
-          {/* NOVO: Filtro por Jogo */}
+          {/* Filtro por Jogo */}
           <div>
-            <label htmlFor="gameFilter" className="block text-sm font-medium text-gray-300 mb-1">Jogo</label>
+            <label htmlFor="gameFilter" className="block text-sm font-medium text-textSecondary mb-1">Jogo</label>
             <select
               id="gameFilter"
+              name="gameFilter"
               value={selectedGame}
               onChange={(e) => setSelectedGame(e.target.value)}
-              className="w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
+              className="w-full p-2 rounded-md focus:border-accent2 focus:ring-accent2 text-sm appearance-none
+                         bg-backgroundPrimary border border-borderColor text-textPrimary"
             >
               <option value="">Todos os Jogos</option>
               {supportedGames.map((gameOption) => (
@@ -157,98 +163,63 @@ export default function MarketplacePage() {
 
           {/* Filtro por Preço Mínimo */}
           <div>
-            <label htmlFor="minPrice" className="block text-sm font-medium text-gray-300 mb-1">Preço Mín.</label>
-            <input
-              type="number"
-              id="minPrice"
-              placeholder="R$ 0.00"
-              value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              className="w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
-            />
+            <label htmlFor="minPrice" className="block text-sm font-medium text-textSecondary mb-1">Preço Mín.</label>
+            <div className="mt-1 flex rounded-md shadow-sm">
+              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-borderColor
+                               bg-backgroundPrimary text-textPrimary text-sm">
+                R$
+              </span>
+              <input
+                type="number"
+                id="minPrice"
+                name="minPrice"
+                placeholder="0.00"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                className="flex-1 block w-full rounded-r-md sm:text-sm p-2
+                           bg-backgroundPrimary border border-borderColor text-textPrimary focus:border-accent2 focus:ring-accent2"
+              />
+            </div>
           </div>
 
           {/* Filtro por Preço Máximo */}
           <div>
-            <label htmlFor="maxPrice" className="block text-sm font-medium text-gray-300 mb-1">Preço Máx.</label>
-            <input
-              type="number"
-              id="maxPrice"
-              placeholder="R$ 999.99"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-full p-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
-            />
+            <label htmlFor="maxPrice" className="block text-sm font-medium text-textSecondary mb-1">Preço Máx.</label>
+            <div className="mt-1 flex rounded-md shadow-sm">
+              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-borderColor
+                               bg-backgroundPrimary text-textPrimary text-sm">
+                R$
+              </span>
+              <input
+                type="number"
+                id="maxPrice"
+                name="maxPrice"
+                placeholder="999.99"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="flex-1 block w-full rounded-r-md sm:text-sm p-2
+                           bg-backgroundPrimary border border-borderColor text-textPrimary focus:border-accent2 focus:ring-accent2"
+              />
+            </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="content-box text-center text-gray-400 text-lg mt-10">
+          <div className="content-box text-center text-textSecondary text-lg mt-10">
             Carregando listagens com filtros...
           </div>
         ) : error ? (
-          <div className="content-box text-center text-red-500 text-lg mt-10">
+          <div className="content-box text-center text-statusError text-lg mt-10">
             Erro: {error}
           </div>
         ) : listings.length === 0 ? (
-          <div className="content-box text-center text-gray-400 text-lg mt-10">
+          <div className="content-box text-center text-textSecondary text-lg mt-10">
             Nenhuma listagem encontrada com os filtros aplicados.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {listings.map((listing) => (
-              <div key={listing.id} className="content-box overflow-hidden flex flex-col transform hover:scale-105 transition duration-300 ease-in-out">
-                {listing.imageUrl ? (
-                  <div className="relative w-full h-48 bg-gray-700 flex items-center justify-center">
-                    <Image
-                      src={listing.imageUrl}
-                      alt={listing.title}
-                      layout="fill" // Use layout="fill" para preencher o div pai
-                      objectFit="cover"
-                      className="rounded-t-lg"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://placehold.co/400x200/4B5563/FFFFFF?text=Sem+Imagem'; // Fallback
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-48 bg-gray-700 flex items-center justify-center text-gray-400 rounded-t-lg">
-                    Sem Imagem
-                  </div>
-                )}
-                <div className="p-5 flex flex-col flex-grow">
-                  <h2 className="text-xl font-semibold text-blue-400 mb-2">{listing.title}</h2>
-                  <p className="text-gray-300 text-sm mb-3 line-clamp-3">{listing.description}</p>
-                  <div className="flex justify-between items-center text-lg font-bold text-green-400 mb-3 mt-auto">
-                    <span>R$ {listing.price.toFixed(2)}</span>
-                    <span className="text-sm text-gray-400">
-                      {listing.category} / {listing.subCategory}
-                      {listing.game && ` (${listing.game})`} {/* Exibe o jogo se existir */}
-                    </span>
-                  </div>
-                  <div className="text-gray-400 text-sm mb-3">
-                    Vendedor: <span className="font-medium text-blue-300">{listing.seller.usuario || listing.seller.email}</span>
-                  </div>
-                  {listing.attributes && Object.keys(listing.attributes).length > 0 && (
-                    <div className="mt-2 text-xs text-gray-400">
-                      <p className="font-semibold mb-1">Atributos:</p>
-                      <ul className="list-disc list-inside">
-                        {Object.entries(listing.attributes).map(([key, value]) => (
-                          <li key={key}>
-                            <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span> {String(value)}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => router.push(`/listing/${listing.id}`)} // Exemplo de navegação para detalhes
-                    className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out"
-                  >
-                    Ver Detalhes
-                  </button>
-                </div>
-              </div>
+              <ListingCard key={listing.id} listing={listing} />
             ))}
           </div>
         )}

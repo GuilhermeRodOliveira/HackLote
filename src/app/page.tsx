@@ -6,7 +6,7 @@ import ListingCard from '@/components/ListingCard/ListingCard';
 import { Listing } from '@/types/listing';
 import CategoryCard from '@/components/CategoryCard/CategoryCard';
 
-// Definir interfaces para os dados (CategoryItem e Section)
+
 interface CategoryItem {
   title: string;
   icon: string;
@@ -18,24 +18,8 @@ interface Section {
   items: CategoryItem[];
 }
 
-// REMOVA ESTA INTERFACE Listing, POIS VOCÊ A IMPORTARÁ DE '@/types/listing'
-// interface Listing {
-//   id: string;
-//   title: string;
-//   description: string;
-//   price: number;
-//   imageUrl?: string;
-//   seller: {
-//     id: string;
-//     usuario?: string;
-//     nome?: string;
-//   };
-//   createdAt: string;
-// }
-
 
 export default function HomePage() {
-  // Use a interface Listing importada de '@/types/listing'
   const [latestListings, setLatestListings] = useState<Listing[]>([]); 
   const [loadingListings, setLoadingListings] = useState(true);
   const [errorListings, setErrorListings] = useState<string | null>(null);
@@ -115,7 +99,7 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {latestListings.map((listing) => (
-              // CORREÇÃO AQUI: Passe o objeto 'listing' INTEIRO para a prop 'listing'
+    
               <ListingCard key={listing.id} listing={listing} /> 
             ))}
           </div>

@@ -11,75 +11,133 @@
   box-sizing: border-box;
 }
 
-/* Estilos globais para o body e html */
+/* Estilos globais para o html */
 html {
-  /* Não adicione padding ou margin aqui */
+  height: 100%;
+  width: 100%;
 }
 
+/* ----------------------------------------------------- */
+/* Variáveis CSS para Temas */
+/* ----------------------------------------------------- */
+
+/* Tema Escuro: Fantasia Mística (Padrão) */
 body {
-  min-height: 100vh; /* Garante que o body ocupe a altura total da viewport */
-  background-color: #0f0f1a; /* Fundo escuro padrão para todo o site (como no Eldorado) */
-  color: #ffffff; /* Cor de texto padrão global */
+  /* Fundo principal */
+  --bg-primary: #1B263B; /* Azul Petróleo */
+  /* Cor principal do texto */
+  --text-primary: #F5F5DC; /* Areia */
+  /* Cores de destaque/secundárias */
+  --accent-1: #C9B037; /* Dourado Antigo */
+  --accent-1-shade: #DDC24F; /* Dourado Antigo - Mais claro para hover */
+  /* Cor de bordas/elementos sutis */
+  --border-color: #2C3E50; /* Cinza Ardósia */
+  /* Cores para componentes específicos (ex: caixas de conteúdo) */
+  --bg-secondary: #2C3E50; /* Cinza Ardósia - Usado para content-box */
+  --text-secondary: #F5F5DC; /* Areia */
+  /* Cor para sombras */
+  --shadow-color: rgba(0, 0, 0, 0.4); /* Sombra escura para o tema escuro */
+
+  /* Estilos padrão do body, usando as variáveis */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* NOVO/IMPORTANTE: Definindo a fonte Poppins diretamente no body como fallback */
-  font-family: var(--font-poppins), sans-serif; 
+  font-family: var(--font-poppins), sans-serif;
+  min-height: 100vh;
 }
 
+/* Tema Claro: Minimal Tech */
+body.light-theme {
+  /* Fundo principal */
+  --bg-primary: #F9FAFB; /* Branco Gelo */
+  /* Cor principal do texto */
+  --text-primary: #111827; /* Preto */
+  /* Cores de destaque/secundárias */
+  --accent-1: #1E3A8A; /* Azul Escuro */
+  --accent-1-shade: #2E4B9A; /* Azul Escuro - Mais escuro para hover */
+  /* Cor de bordas/elementos sutis */
+  --border-color: #E5E7EB; /* Cinza Claro */
+  /* Cores para componentes específicos (ex: caixas de conteúdo) */
+  --bg-secondary: #E5E7EB; /* Cinza Claro - Usado para content-box */
+  --text-secondary: #111827; /* Preto */
+  /* Cor para sombras */
+  --shadow-color: rgba(0, 0, 0, 0.1); /* Sombra mais clara para o tema claro */
+}
+
+/* ----------------------------------------------------- */
 /* Estilos globais para elementos interativos */
+/* ----------------------------------------------------- */
+
 button {
   cursor: pointer;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+  color: inherit; /* Mantém a cor do texto do pai (geralmente --text-primary) */
+  text-decoration: none; /* Remove o sublinhado padrão */
 }
 
-a:hover {
-  text-decoration: underline;
-}
+/* Removido: a:hover { text-decoration: underline; } */
 
 /* Estilos para barra de rolagem */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
+/* Usando variáveis para as cores da barra de rolagem */
 ::-webkit-scrollbar-thumb {
-  background: #f0eded;
+  background: var(--accent-1); /* Use uma cor da paleta, por exemplo o Dourado/Azul Escuro */
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--accent-2); /* Outra cor da paleta, por exemplo o Borgonha/Azul Claro */
 }
 
 /* Regras para outline (melhora a acessibilidade): */
 *:focus-visible {
-  outline: 2px solid #63b3ed;
+  outline: 2px solid var(--accent-2); /* Cor de destaque para acessibilidade */
   outline-offset: 2px;
 }
 
-/* Opcional: Container de formulários. Use classes Tailwind sempre que possível. */
 .container-form {
-  color: #eee;
+  color: var(--text-primary); /* Ajustado para usar a variável */
   backdrop-filter: blur(120px);
-  background-color: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background-color: transparent; /* Mantém transparente ou pode ser uma variável se quiser fundo sólido */
+  border: 2px solid var(--border-color); /* Ajustado para usar a variável */
   border-radius: 10px;
-  width: 420px;
-  margin-top: 100px; /* Pode precisar de ajuste com a SideBar */
-  padding: 20px 40px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 420px;
+  margin-top: 40px;
+  padding: 20px 24px;
+  box-shadow: 0 0 10px var(--shadow-color); /* Usando variável para a cor da sombra */
 }
 
-/* Opcional: Estilo para caixas de conteúdo. Use classes Tailwind sempre que possível. */
 .content-box {
-  background-color: #1a202c; /* Fundo escuro sutil para caixas, para combinar com o tema */
-  color: #ffffff; /* Texto branco no fundo escuro */
-  border: 1px solid rgba(74, 85, 104, 0.5);
+  background-color: var(--bg-secondary); /* Ajustado para usar a variável */
+  color: var(--text-secondary); /* Ajustado para usar a variável */
+  border: 1px solid var(--border-color); /* Ajustado para usar a variável */
   border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  margin-bottom: 24px;
+  padding: 16px;
+  box-shadow: 0 4px 12px var(--shadow-color); /* Usando variável para a cor da sombra */
+  margin-bottom: 16px;
+}
+
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+}
+
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
 }

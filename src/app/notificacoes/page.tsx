@@ -1,8 +1,10 @@
+// src/app/notificacoes/page.tsx
 'use client';
 
 import React, { useState, useEffect, useContext } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import 'react-toastify/dist/ReactToastify.css'; // CORRIGIDO: Removido o hífen e garantido o 'R' maiúsculo
+
 import { AuthContext } from '@/context/AuthContext';
 import Link from 'next/link';
 
@@ -136,9 +138,9 @@ export default function NotificationsPage() {
           <p className="mt-4 text-base">
             Encontre mais oportunidades de boost em sua área de Booster.
           </p>
-          {/* Este link deve levar para a página principal do booster ou para o botão "Seja um Booster" */}
-          <Link href="/seja-um-booster" className="mt-4 inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-            Acessar Área de Booster
+          {/* Este link agora leva para a nova página de configurações de boost */}
+          <Link href="/booster/configuracoes" className="mt-4 inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+            Acessar Configurações de Booster
             <span className="material-symbols-outlined ml-2 text-lg">arrow_forward</span>
           </Link>
         </div>

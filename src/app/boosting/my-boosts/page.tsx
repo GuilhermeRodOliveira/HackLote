@@ -128,7 +128,7 @@ export default function MyBoostsPage() {
               + Fazer Novo Pedido de Boosting
             </button>
           </Link>
-          <Link href="\components\BoostNotificationSettings" passHref>
+          <Link href="/booster/configuracoes" passHref>
             <button
               className="py-3 px-6 bg-yellow-600 text-white rounded-lg font-semibold hover:bg-yellow-700 transition w-full sm:w-auto"
             >

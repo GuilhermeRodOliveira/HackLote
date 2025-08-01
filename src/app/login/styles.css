@@ -7,7 +7,9 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #0d0f25;
+  /* REMOVIDO: background-image para usar o fundo global */
+  background-color: transparent; /* Garante que o fundo do body seja visível */
+  overflow: hidden; /* Adicionado para evitar rolagem nesta página */
 }
 
 .container h1 {

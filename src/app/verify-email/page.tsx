@@ -1,19 +1,19 @@
+// src/app/verify-email/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation'; // useSearchParams para pegar o email da URL
-import { toast } from 'react-toastify';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'react-hot-toast'; // VERIFIQUE ESTA IMPORTAÇÃO: use 'react-hot-toast' ou 'react-toastify' consistentemente
 import Link from 'next/link';
 import './styles.css'; // Crie este arquivo CSS para estilos específicos se necessário
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // Para ler parâmetros da URL
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Preenche o email se ele vier como parâmetro na URL (ex: /verify-email?email=usuario@exemplo.com)
   useEffect(() => {
     const emailParam = searchParams.get('email');
     if (emailParam) {
@@ -57,8 +57,8 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="verify-email-page-wrapper flex justify-center items-center min-h-screen bg-[#0d0f25]"> {/* Fundo escuro */}
-      <main className="container"> {/* Reutiliza a classe global .container para o card */}
+    <div className="verify-email-page-wrapper flex justify-center items-center min-h-screen">
+      <main className="container">
         <form onSubmit={handleVerify}>
           <h1 className="text-3xl font-bold text-center mb-6">Verificar E-mail</h1>
           <p className="text-gray-400 text-center mb-4">
@@ -72,7 +72,7 @@ export default function VerifyEmailPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              readOnly={!!searchParams.get('email')} // Torna o campo somente leitura se o email vier da URL
+              readOnly={!!searchParams.get('email')}
             />
             <i className="bx bxs-envelope"></i>
           </div>
@@ -83,22 +83,22 @@ export default function VerifyEmailPage() {
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              maxLength={6} // Códigos de 6 dígitos
+              maxLength={6}
               required
             />
-            <i className="bx bxs-key"></i> {/* Ícone de chave/código */}
+            <i className="bx bxs-key"></i>
           </div>
 
           <button
             type="submit"
-            className="login-button" // Reutiliza o estilo do botão de login
+            className="login-button"
             disabled={loading}
           >
             {loading ? 'Verificando...' : 'Verificar E-mail'}
           </button>
 
           <div className="register-link mt-4">
-            <p>Não recebeu o código? <Link href="/register" className="text-blue-400 hover:underline">Reenviar</Link></p> {/* Link para reenviar (pode ser ajustado para um endpoint de reenviar) */}
+            <p>Não recebeu o código? <Link href="/register" className="text-blue-400 hover:underline">Reenviar</Link></p>
           </div>
           <div className="register-link">
             <p><Link href="/login" className="text-blue-400 hover:underline">Voltar para o Login</Link></p>

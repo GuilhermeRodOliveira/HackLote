@@ -4,10 +4,10 @@ import { Poppins } from 'next/font/google';
 import './globals.css';
 
 import { AuthProvider } from '@/context/AuthContext';
-// REMOVIDO: import SideBar from '@/components/SideBar/SideBar';
 import Header from '@/components/Header/Header';
 import Footer from '../components/Footer/Footer';
-import ToastProvider from '@/components/ToastProvider/ToastProvider';
+// REMOVIDO: ToastProvider (usaremos o Toaster diretamente do react-hot-toast)
+import { Toaster } from 'react-hot-toast'; // Importar o Toaster do react-hot-toast
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -33,19 +33,22 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-backgroundLight text-textDark antialiased">
+      {/* Adicionado suppressHydrationWarning para resolver o aviso de hidratação */}
+      <body className="antialiased" suppressHydrationWarning={true}>
         <AuthProvider>
           {/* O `flex min-h-screen` aqui ainda garante que o layout ocupa toda a altura */}
-          <div className="flex flex-col min-h-screen"> {/* Mudei para flex-col */}
-            <Header /> {/* O Header está fixo no topo, não precisa estar dentro do flex para empurrar o conteúdo */}
+          <div className="flex flex-col min-h-screen">
+            <Header />
             
             {/* O main agora precisa de padding-top para o header fixo, e removemos o padding-left da sidebar */}
+            {/* Certifique-se de que o conteúdo dentro de 'children' também tenha um background escuro, se necessário */}
             <main className="flex-grow pt-[80px] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
               {children}
             </main>
             
             <Footer />
-            <ToastProvider />
+            {/* Adicionado o Toaster diretamente aqui */}
+            <Toaster position="top-right" reverseOrder={false} />
           </div>
         </AuthProvider>
       </body>

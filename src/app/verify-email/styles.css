@@ -9,7 +9,9 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #0d0f25; /* Fundo sólido escuro */
+  /* REMOVIDO: background-color específico para usar o fundo global do body */
+  background-color: transparent; /* Garante que o fundo do body seja visível */
+  overflow: hidden; /* Adicionado para evitar rolagem nesta página */
   /* Se o <main> no layout.tsx já tem padding-left, este wrapper não precisa */
   /* padding-left: 85px; */
 }
