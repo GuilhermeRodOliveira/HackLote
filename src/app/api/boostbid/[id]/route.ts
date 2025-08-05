@@ -1,9 +1,9 @@
 // src/app/api/boostbid/[id]/route.ts
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '../../../../utils/prisma'; // Caminho correto para o seu Prisma Client
+import { prisma } from '@/utils/prisma'; // Caminho corrigido
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET; // Carregar JWT_SECRET do .env
+const JWT_SECRET = process.env.JWT_SECRET;
 
 interface JwtUserPayload {
   id: string;
@@ -13,14 +13,13 @@ interface JwtUserPayload {
   exp: number;
 }
 
-// Endpoint GET para buscar um único lance pelo ID (útil para edição)
+// Endpoint GET para buscar um único lance pelo ID
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params);
-    const { id } = resolvedParams; // ID do lance
+    const { id } = params;
 
     if (!id) {
       return NextResponse.json({ error: 'ID do lance não fornecido.' }, { status: 400 });
@@ -41,7 +40,7 @@ export async function GET(
           select: {
             id: true,
             game: true,
-            userId: true, // ID do criador do pedido de boost
+            userId: true,
           },
         },
       },
@@ -70,8 +69,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
-    const resolvedParams = await Promise.resolve(params);
-    const { id: bidId } = resolvedParams; // ID do lance a ser atualizado
+    const { id: bidId } = params;
 
     const tokenCookie = req.cookies.get('token');
     if (!tokenCookie || !tokenCookie.value) {
@@ -86,12 +84,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Token inválido ou expirado para editar lance.' }, { status: 401 });
     }
 
-    const boosterId = decodedToken.id; // ID do usuário logado (deve ser o criador do lance)
+    const boosterId = decodedToken.id;
 
     const body = await req.json();
     const { amount, estimatedTime } = body;
 
-    // 1. Buscar o lance existente para verificar a autoria
     const existingBid = await prisma.boostBid.findUnique({
       where: { id: bidId },
     });
@@ -100,12 +97,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Lance não encontrado para edição.' }, { status: 404 });
     }
 
-    // 2. Verificar se o usuário logado é o criador do lance
     if (existingBid.boosterId !== boosterId) {
       return NextResponse.json({ error: 'Você não tem permissão para editar este lance.' }, { status: 403 });
     }
 
-    // 3. Validar os novos dados
     if (!amount || !estimatedTime) {
       return NextResponse.json({ error: 'Preço e Tempo Estimado são obrigatórios.' }, { status: 400 });
     }
@@ -114,7 +109,6 @@ export async function PUT(
       return NextResponse.json({ error: 'Preço inválido.' }, { status: 400 });
     }
 
-    // 4. Atualizar o lance no banco de dados
     const updatedBid = await prisma.boostBid.update({
       where: { id: bidId },
       data: {
@@ -132,7 +126,7 @@ export async function PUT(
   }
 }
 
-// NOVO: Endpoint DELETE para excluir um lance existente
+// Endpoint DELETE para excluir um lance existente
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -144,8 +138,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
-    const resolvedParams = await Promise.resolve(params);
-    const { id: bidId } = resolvedParams; // ID do lance a ser excluído
+    const { id: bidId } = params;
 
     const tokenCookie = req.cookies.get('token');
     if (!tokenCookie || !tokenCookie.value) {
@@ -160,13 +153,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Token inválido ou expirado para excluir lance.' }, { status: 401 });
     }
 
-    const boosterId = decodedToken.id; // ID do usuário logado (deve ser o criador do lance)
+    const boosterId = decodedToken.id;
 
-    // 1. Buscar o lance existente para verificar a autoria e se ele já foi aceito
     const existingBid = await prisma.boostBid.findUnique({
       where: { id: bidId },
       include: {
-        boostRequest: { // Inclui o pedido para verificar se já foi aceito
+        boostRequest: {
           select: { acceptedBidId: true }
         }
       }
@@ -176,17 +168,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Lance não encontrado para exclusão.' }, { status: 404 });
     }
 
-    // 2. Verificar se o usuário logado é o criador do lance
     if (existingBid.boosterId !== boosterId) {
       return NextResponse.json({ error: 'Você não tem permissão para excluir este lance.' }, { status: 403 });
     }
 
-    // 3. Impedir exclusão se o lance já foi aceito
     if (existingBid.boostRequest?.acceptedBidId === bidId) {
         return NextResponse.json({ error: 'Não é possível excluir um lance que já foi aceito.' }, { status: 400 });
     }
 
-    // 4. Excluir o lance do banco de dados
     await prisma.boostBid.delete({
       where: { id: bidId },
     });

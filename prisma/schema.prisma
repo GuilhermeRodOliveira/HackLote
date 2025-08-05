@@ -1,4 +1,4 @@
-// prisma/schema.prisma
+// file: prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -6,124 +6,175 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url       = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
+// --- MODELOS E ENUMS AUXILIARES (DEFINIDOS PRIMEIRO) ---
+
+// Enums da carteira
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT_SENT
+  PAYMENT_RECEIVED
+  REFUND
+  FEE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+// Enum para o status do chat (NOVO)
+enum ChatStatus {
+  PENDING_BID // Chat temporário, criado após um lance
+  ACTIVE      // Chat ativo, o lance foi aceito
+  CLOSED      // Chat fechado, outro lance foi aceito ou o chat foi encerrado
+}
+
+// Enum de notificações
+enum NotificationType {
+  NEW_BID
+  BID_ACCEPTED
+  MESSAGE
+  BOOST_REQUEST_CREATED
+  LISTING_BOUGHT
+  ORDER_STATUS_UPDATED
+}
+
+// Modelos da carteira
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  balance      Float         @default(0.00)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id             String            @id @default(uuid())
+  walletId       String
+  wallet         Wallet            @relation(fields: [walletId], references: [id])
+  type           TransactionType
+  amount         Float
+  description    String?
+  status         TransactionStatus @default(PENDING)
+  relatedOrderId String?
+  orderId        String?
+  order          Order?            @relation("OrderTransactions", fields: [orderId], references: [id])
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+// --- MODELOS PRINCIPAIS (QUE FAZEM REFERÊNCIA AOS AUXILIARES) ---
+
 model User {
-  id                                  String    @id @default(uuid())
-  nome                                String?
-  usuario                             String?   @unique
-  email                               String    @unique
-  password                            String
-
-  cpf                                 String?   @unique
-
-  bio                                 String?
-  profilePictureUrl                   String?
-  country                             String?
-
-  hasChangedUsername                  Boolean   @default(false)
-  usernameLastChangedAt               DateTime?
-
-  isVerified                          Boolean   @default(false)
-
-  receiveMarketingEmails              Boolean   @default(true)
-  receiveOrderUpdates                 Boolean   @default(true)
-  receiveMessageNotifications         Boolean   @default(true)
-  receiveInAppNotifications           Boolean   @default(true)
-
-  isProfilePublic                     Boolean   @default(true)
-  isActivityPublic                    Boolean   @default(true)
-
-  preferredLanguage                   String    @default("pt-BR")
-  theme                               String    @default("dark")
-  preferredCurrency                   String    @default("BRL")
-
-  failedLoginAttempts                 Int       @default(0)
-  lockoutUntil                        DateTime?
-
-  boostRequests                       BoostRequest[]
-  boostBids                           BoostBid[]
-  listings                            Listing[] @relation("SellerListings")
-  createdAt                           DateTime  @default(now())
-  updatedAt                           DateTime  @updatedAt
-  boostNotificationPreferences        BoostNotificationPreference[]
-  reviewsGiven                        Review[]  @relation("ReviewGiven")
-  reviewsReceived                     Review[]  @relation("ReviewReceived")
-  userNotifications                   UserNotification[]
-  notifications                       Notification[]
-
-  chatSessionsAsParticipant1          ChatSession[] @relation("ChatParticipant1")
-  chatSessionsAsParticipant2          ChatSession[] @relation("ChatParticipant2")
-  messages                            ChatMessage[]
-
-  purchases                           Order[]   @relation("BuyerOrders")
-  sales                               Order[]   @relation("SellerOrders")
-
-  wallet                              Wallet?
+  id                                String    @id @default(uuid())
+  nome                              String?
+  usuario                           String?   @unique
+  email                             String    @unique
+  password                          String
+  cpf                               String?   @unique
+  bio                               String?
+  profilePictureUrl                 String?
+  country                           String?
+  hasChangedUsername                Boolean   @default(false)
+  usernameLastChangedAt             DateTime?
+  isVerified                        Boolean   @default(false)
+  receiveMarketingEmails            Boolean   @default(true)
+  receiveOrderUpdates               Boolean   @default(true)
+  receiveMessageNotifications       Boolean   @default(true)
+  isProfilePublic                   Boolean   @default(true)
+  isActivityPublic                  Boolean   @default(true)
+  preferredLanguage                 String    @default("pt-BR")
+  theme                             String    @default("dark")
+  preferredCurrency                 String    @default("BRL")
+  failedLoginAttempts               Int       @default(0)
+  lockoutUntil                      DateTime?
+  boostRequests                     BoostRequest[]
+  boostBids                         BoostBid[]
+  listings                          Listing[] @relation("SellerListings")
+  createdAt                         DateTime  @default(now())
+  updatedAt                         DateTime  @updatedAt
+  boostNotificationPreferences      BoostNotificationPreference[]
+  reviewsGiven                      Review[]  @relation("ReviewGiven")
+  reviewsReceived                   Review[]  @relation("ReviewReceived")
+  userNotifications                 UserNotification[]
+  notifications                     Notification[]
+  chatParticipants                  ChatParticipant[]
+  sentMessages                      Message[]
+  purchases                         Order[]   @relation("BuyerOrders")
+  sales                             Order[]   @relation("SellerOrders")
+  wallet                            Wallet?
 }
 
 model Listing {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String
   price       Float
   category    String
   subCategory String?
-  imageUrls   String? // <<< ALTERADO: Agora é uma única String, já que SQLite não suporta array.
+  imageUrls   String? 
   attributes  Json?
   game        String
   sellerId    String
-  seller      User      @relation("SellerListings", fields: [sellerId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  seller      User     @relation("SellerListings", fields: [sellerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   orders      Order[]
 }
 
 model Order {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   listingId   String
   buyerId     String
   sellerId    String
   price       Float
-  status      String    @default("Pendente")
+  status      String   @default("Pendente")
   notes       String?
-  listing     Listing   @relation(fields: [listingId], references: [id])
-  buyer       User      @relation("BuyerOrders", fields: [buyerId], references: [id])
-  seller      User      @relation("SellerOrders", fields: [sellerId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  buyer       User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller      User     @relation("SellerOrders", fields: [sellerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   transactions Transaction[] @relation("OrderTransactions")
 }
 
 model BoostRequest {
-  id                  String    @id @default(uuid())
-  user                User      @relation(fields: [userId], references: [id])
+  id                  String   @id @default(uuid())
+  user                User     @relation(fields: [userId], references: [id])
   userId              String
   game                String
   currentRank         String
   desiredRank         String
   description         String?
-  createdAt           DateTime  @default(now())
+  createdAt           DateTime @default(now())
   bids                BoostBid[]
   acceptedBidId       String?   @unique
   acceptedBid         BoostBid? @relation("AcceptedBidRelation", fields: [acceptedBidId], references: [id])
   userNotifications   UserNotification[]
   notifications       Notification[]
-  chatSession         ChatSession?
+  // Relacionamento com o chat para chats de boosting
+  chats               Chat[]
 }
 
 model BoostBid {
-  id                  String    @id @default(uuid())
-  booster             User      @relation(fields: [boosterId], references: [id])
-  boosterId           String
-  boostRequest        BoostRequest @relation(fields: [boostRequestId], references: [id])
-  boostRequestId      String
-  amount              Float
-  estimatedTime       String
-  createdAt           DateTime  @default(now())
-  acceptedBy          BoostRequest? @relation("AcceptedBidRelation")
-  notifications       Notification[]
+  id             String   @id @default(uuid())
+  booster        User     @relation(fields: [boosterId], references: [id])
+  boosterId      String
+  boostRequest   BoostRequest @relation(fields: [boostRequestId], references: [id])
+  boostRequestId String
+  amount         Float
+  estimatedTime  String
+  createdAt      DateTime @default(now())
+  acceptedBy     BoostRequest? @relation("AcceptedBidRelation")
+  notifications  Notification[]
 }
 
 model BoostNotificationPreference {
@@ -137,15 +188,15 @@ model BoostNotificationPreference {
 }
 
 model VerificationCode {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  code            String
-  expiresAt       DateTime
-  nome            String?
-  usuario         String?
-  hashedPassword  String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String   @id @default(cuid())
+  email          String   @unique
+  code           String
+  expiresAt      DateTime
+  nome           String?
+  usuario        String?
+  hashedPassword String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Review {
@@ -163,13 +214,13 @@ model Review {
 }
 
 model UserNotification {
-  id            String       @id @default(cuid())
-  userId        String
-  user          User         @relation(fields: [userId], references: [id])
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
   boostRequestId String
-  boostRequest  BoostRequest @relation(fields: [boostRequestId], references: [id])
-  isRead        Boolean      @default(false)
-  createdAt     DateTime     @default(now())
+  boostRequest   BoostRequest @relation(fields: [boostRequestId], references: [id])
+  isRead         Boolean     @default(false)
+  createdAt      DateTime    @default(now())
 
   @@unique([userId, boostRequestId])
 }
@@ -188,87 +239,37 @@ model Notification {
   createdAt             DateTime         @default(now())
 }
 
-enum NotificationType {
-  NEW_BID
-  BID_ACCEPTED
-  MESSAGE
-  BOOST_REQUEST_CREATED
-  LISTING_BOUGHT
-  ORDER_STATUS_UPDATED
+// --- MODELOS DE CHAT UNIFICADOS ---
+model Chat {
+  id              String             @id @default(uuid())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  participants    ChatParticipant[]
+  messages        Message[]
+  lastMessageText String?
+  lastMessageAt   DateTime?
+  // Campos de chat de boosting (NOVO)
+  status          ChatStatus         @default(PENDING_BID)
+  boostRequestId  String?
+  boostRequest    BoostRequest?      @relation(fields: [boostRequestId], references: [id])
 }
 
-model ChatSession {
-  id               String            @id @default(uuid())
-  boostRequestId   String            @unique
-  boostRequest     BoostRequest?     @relation(fields: [boostRequestId], references: [id])
-  participant1Id   String
-  participant1     User              @relation("ChatParticipant1", fields: [participant1Id], references: [id])
-  participant2Id   String
-  participant2     User              @relation("ChatParticipant2", fields: [participant2Id], references: [id])
-  status           ChatSessionStatus @default(OPEN)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  messages         ChatMessage[]
+model ChatParticipant {
+  id      String @id @default(uuid())
+  chatId  String
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  chat    Chat   @relation(fields: [chatId], references: [id])
+
+  @@unique([chatId, userId])
 }
 
-model ChatMessage {
-  id            String    @id @default(uuid())
-  chatSessionId String
-  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id])
-  senderId      String
-  sender        User      @relation(fields: [senderId], references: [id])
-  content       String
-  createdAt     DateTime  @default(now())
-  isSystemMessage Boolean @default(false)
-}
-
-enum ChatSessionStatus {
-  OPEN
-  CLOSED_ACCEPTED
-  CLOSED_CANCELED
-}
-
-// --- MODELOS PARA CARTEIRA ---
-
-model Wallet {
-  id           String        @id @default(uuid())
-  userId       String        @unique
-  user         User          @relation(fields: [userId], references: [id])
-  balance      Float         @default(0.00)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
-}
-
-model Transaction {
-  id           String          @id @default(uuid())
-  walletId     String
-  wallet       Wallet          @relation(fields: [walletId], references: [id])
-  type         TransactionType
-  amount       Float
-  description  String?
-  status       TransactionStatus @default(PENDING)
-  relatedOrderId String?
-
-  orderId      String?
-  order        Order?          @relation("OrderTransactions", fields: [orderId], references: [id])
-
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-}
-
-enum TransactionType {
-  DEPOSIT
-  WITHDRAWAL
-  PAYMENT_SENT
-  PAYMENT_RECEIVED
-  REFUND
-  FEE
-}
-
-enum TransactionStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  CANCELED
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  text      String
+  createdAt DateTime @default(now())
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id])
 }

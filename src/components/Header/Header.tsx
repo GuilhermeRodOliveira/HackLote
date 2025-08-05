@@ -145,7 +145,7 @@ export default function Header() {
             {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
           </button>
 
-          <button onClick={() => handleLinkClick('/mensagens')} aria-label="Ver minhas mensagens" 
+          <button onClick={() => handleLinkClick('/chats')} aria-label="Ver minhas mensagens" 
                   className="p-1 rounded-full hover:bg-backgroundSecondary transition-colors duration-200 text-textPrimary">
             <MessageSquare size={24} />
           </button>
@@ -182,7 +182,7 @@ export default function Header() {
               </button>
               {/* Dropdown de perfil para desktop */}
               <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50
-                         bg-backgroundSecondary text-textPrimary">
+                             bg-backgroundSecondary text-textPrimary">
                 <Link href="/perfil" className="block px-4 py-2 text-sm hover:bg-backgroundPrimary transition-colors duration-200 text-textPrimary" onClick={() => setIsMainMenuOpen(false)}>
                   Meu Perfil
                 </Link>
@@ -289,14 +289,14 @@ export default function Header() {
               <Link href="/wallet" className="flex items-center px-3 py-1.5 text-sm rounded-md transition-colors duration-200 hover:bg-backgroundPrimary text-textPrimary" onClick={() => handleLinkClick('/carteira')}>
                 <Wallet size={18} className="mr-3" /> Carteira
               </Link>
-              <Link href="/mensagens" className="flex items-center px-3 py-1.5 text-sm rounded-md transition-colors duration-200 hover:bg-backgroundPrimary text-textPrimary" onClick={() => handleLinkClick('/mensagens')}>
+              <Link href="/chats" className="flex items-center px-3 py-1.5 text-sm rounded-md transition-colors duration-200 hover:bg-backgroundPrimary text-textPrimary" onClick={() => handleLinkClick('/chats')}>
                 <MessageSquare size={18} className="mr-3" /> Mensagens
               </Link>
               <Link href="/notificacoes" className="flex items-center px-3 py-1.5 text-sm rounded-md transition-colors duration-200 hover:bg-backgroundPrimary text-textPrimary" onClick={() => handleLinkClick('/notificacoes')}>
                 <Bell size={18} className="mr-3" /> Notificações
                 {notificationCount > 0 && (
                   <span className="ml-2 px-2 py-0.5 text-xs font-bold rounded-full
-                                   bg-accent2 text-textPrimary">
+                                     bg-accent2 text-textPrimary">
                     {notificationCount}
                   </span>
                 )}
@@ -320,13 +320,13 @@ export default function Header() {
                 <div className="flex flex-col gap-2 mt-2">
                   <Link href="/login">
                     <button className="w-full px-3 py-2 rounded-md transition duration-200
-                                   bg-accent1 text-backgroundPrimary">
+                                     bg-accent1 text-backgroundPrimary">
                       Login
                     </button>
                   </Link>
                   <Link href="/register">
                     <button className="w-full px-3 py-2 rounded-md transition duration-200
-                                   bg-accent2 text-textPrimary">
+                                     bg-accent2 text-textPrimary">
                       Registro
                     </button>
                   </Link>

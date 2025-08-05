@@ -5,11 +5,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ListingCard from '@/components/ListingCard/ListingCard'; 
 
-import { useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Interface para o objeto Listing (deve corresponder ao seu modelo Prisma)
 interface Listing {
   id: string;
   title: string;
@@ -17,7 +15,7 @@ interface Listing {
   price: number;
   category: string;
   subCategory?: string; 
-  imageUrls: string[]; // ALTERADO: Agora espera um array de URLs
+  imageUrls: string[]; 
   attributes?: Record<string, any> | null;
   sellerId: string;
   seller: {
@@ -36,7 +34,6 @@ export default function MarketplacePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -63,8 +60,7 @@ export default function MarketplacePage() {
         if (maxPrice) queryParams.append('maxPrice', maxPrice);
 
         const url = `/api/listings?${queryParams.toString()}`;
-        console.log('Buscando listagens com URL:', url);
-
+        
         const res = await fetch(url);
         const data = await res.json();
 
@@ -88,7 +84,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen pt-24 pb-8 px-4 sm:px-6 lg:px-8
-                     bg-backgroundPrimary text-textPrimary transition-colors duration-300">
+                    bg-backgroundPrimary text-textPrimary transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h1 className="text-3xl sm:text-4xl font-bold text-accent1">Marketplace</h1>
@@ -108,10 +104,8 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        {/* Seção de Filtros - Mais compacta e com cores do tema */}
         <div className="rounded-lg p-4 mb-8 shadow-lg border grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3
-                         bg-backgroundSecondary border-borderColor">
-          {/* Busca por Termo */}
+                          bg-backgroundSecondary border-borderColor">
           <div>
             <label htmlFor="search" className="block text-sm font-medium text-textSecondary mb-1">Buscar</label>
             <input
@@ -125,7 +119,6 @@ export default function MarketplacePage() {
             />
           </div>
 
-          {/* Filtro por Categoria */}
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-textSecondary mb-1">Categoria</label>
             <select
@@ -143,7 +136,6 @@ export default function MarketplacePage() {
             </select>
           </div>
 
-          {/* Filtro por Jogo */}
           <div>
             <label htmlFor="gameFilter" className="block text-sm font-medium text-textSecondary mb-1">Jogo</label>
             <select
@@ -161,7 +153,6 @@ export default function MarketplacePage() {
             </select>
           </div>
 
-          {/* Filtro por Preço Mínimo */}
           <div>
             <label htmlFor="minPrice" className="block text-sm font-medium text-textSecondary mb-1">Preço Mín.</label>
             <div className="mt-1 flex rounded-md shadow-sm">
@@ -182,7 +173,6 @@ export default function MarketplacePage() {
             </div>
           </div>
 
-          {/* Filtro por Preço Máximo */}
           <div>
             <label htmlFor="maxPrice" className="block text-sm font-medium text-textSecondary mb-1">Preço Máx.</label>
             <div className="mt-1 flex rounded-md shadow-sm">

@@ -1,13 +1,11 @@
-// src/app/booster/configuracoes/page.tsx
 'use client';
 
 import React, { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
-import { AuthContext } from '@/context/AuthContext'; // Importe seu AuthContext
+import { AuthContext } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image'; // Importe o componente Image do Next.js
+import Image from 'next/image';
 
-// Interface para as preferências de notificação do banco de dados
 interface BoostPreference {
   id: string;
   userId: string;
@@ -15,7 +13,6 @@ interface BoostPreference {
   boostType: string;
 }
 
-// Dados de exemplo para jogos e tipos de boost
 const AVAILABLE_BOOST_OPTIONS = [
   { game: 'Apex Legends', types: ['Rank Boost', 'Badge Boost', 'Win Boost'] },
   { game: 'Black Desert Online', types: ['Leveling Boost', 'Gear Score Boost', 'Silver Farm'] },
@@ -59,7 +56,6 @@ const AVAILABLE_BOOST_OPTIONS = [
   { game: 'WoW Classic', types: ['Leveling Boost', 'Gold Farm', 'Raid Carry'] },
 ];
 
-// Mapeamento de jogos para números de ícones (AGORA COM AS CORRESPONDÊNCIAS EXATAS FORNECIDAS)
 const GAME_ICON_MAP: Record<string, string> = {
   'Apex Legends': '33',
   'Black Desert Online': '24',
@@ -103,26 +99,19 @@ const GAME_ICON_MAP: Record<string, string> = {
   'WoW Classic': '92',
 };
 
-// URL base para os ícones
 const ICON_BASE_URL = 'https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v21/';
 
-export default function BoosterNotificationSettingsPage() { // Renomeado para refletir que é uma página
+export default function BoosterNotificationSettingsPage() {
   const { user, loading: authLoading } = useContext(AuthContext);
   const router = useRouter();
-
-  // Estado para armazenar as preferências do usuário (mapa para fácil acesso)
-  // Key: `${game}-${boostType}`, Value: boolean (true se inscrito)
   const [userPreferences, setUserPreferences] = useState<Record<string, boolean>>({});
-  // Estado para controlar qual jogo está expandido/aberto
   const [expandedGames, setExpandedGames] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false); // Novo estado para indicar salvamento
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Função para simular o salvamento das preferências no backend
   const savePreferencesToBackend = async (preferences: Record<string, boolean>) => {
     setIsSaving(true);
     try {
-      // Converte o mapa de preferências de volta para o formato esperado pela API
       const preferencesToSend = AVAILABLE_BOOST_OPTIONS.flatMap(gameOption =>
         gameOption.types.map(type => ({
           game: gameOption.game,
@@ -131,26 +120,24 @@ export default function BoosterNotificationSettingsPage() { // Renomeado para re
         }))
       );
 
-      // Aqui você faria a chamada REAL para a API para salvar as preferências
-      // Exemplo:
-      // const res = await fetch('/api/boost-preferences', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ preferences: preferencesToSend }),
-      // });
-      // const data = await res.json();
+      // --- CÓDIGO CORRIGIDO: A CHAMADA REAL À API ESTÁ DESCOMENTADA ---
+      const res = await fetch('/api/boost-preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ preferences: preferencesToSend }),
+      });
 
-      // Simulação de delay da API
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const data = await res.json();
 
-      // if (res.ok) {
-        toast.success('Preferências de Boost salvas automaticamente!');
-        console.log('Preferências de Boost salvas automaticamente:', preferencesToSend);
-      // } else {
-      //   toast.error(data.error || 'Erro ao salvar preferências automaticamente.');
-      // }
+      if (res.ok) {
+        toast.success(data.message || 'Preferências de Boost salvas com sucesso!');
+        console.log('Preferências de Boost salvas:', preferencesToSend);
+      } else {
+        toast.error(data.error || 'Erro ao salvar preferências automaticamente.');
+      }
+      // --- FIM DA CORREÇÃO ---
     } catch (error) {
       console.error('Erro de rede ao salvar preferências automaticamente:', error);
       toast.error('Erro de rede. Não foi possível salvar as preferências.');
@@ -161,7 +148,7 @@ export default function BoosterNotificationSettingsPage() { // Renomeado para re
 
   useEffect(() => {
     const fetchPreferences = async () => {
-      if (authLoading) return; // Espera a autenticação carregar
+      if (authLoading) return;
 
       if (!user) {
         toast.error('Você precisa estar logado para gerenciar preferências de boost.');
@@ -192,28 +179,20 @@ export default function BoosterNotificationSettingsPage() { // Renomeado para re
     };
 
     fetchPreferences();
-  }, [user, authLoading, router]); // Dependências
+  }, [user, authLoading, router]);
 
-  // Efeito para salvar automaticamente as configurações quando userPreferences mudam
   useEffect(() => {
-    // Evita o salvamento inicial quando o componente é montado
-    // ou quando os estados são inicializados pela primeira vez.
-    // Você pode adicionar uma flag para controlar isso se precisar carregar do backend.
-    
-    // Verifica se o componente terminou de carregar as preferências iniciais
-    if (isLoading) return; 
+    if (isLoading) return;
 
     const handler = setTimeout(() => {
       savePreferencesToBackend(userPreferences);
-    }, 500); // Debounce de 500ms para evitar muitas chamadas à API
+    }, 500);
 
-    // Limpa o timeout se os estados mudarem novamente antes do tempo
     return () => {
       clearTimeout(handler);
     };
-  }, [userPreferences, isLoading]); // Dependências: salva quando userPreferences muda
+  }, [userPreferences, isLoading]);
 
-  // Função para lidar com a mudança do toggle de preferência
   const handleToggleChange = (game: string, boostType: string, isChecked: boolean) => {
     setUserPreferences(prev => ({
       ...prev,
@@ -221,7 +200,6 @@ export default function BoosterNotificationSettingsPage() { // Renomeado para re
     }));
   };
 
-  // Função para alternar a expansão de um jogo
   const toggleGameExpansion = (game: string) => {
     setExpandedGames(prev => ({
       ...prev,
@@ -238,39 +216,32 @@ export default function BoosterNotificationSettingsPage() { // Renomeado para re
   }
 
   if (!user) {
-    return null; // O useEffect já redireciona se não houver usuário
+    return null;
   }
 
   return (
-    // ALTERADO: Aplicando max-w-3xl mx-auto e padding diretamente ao div raiz do componente
     <div className="max-w-3xl mx-auto py-4 px-4 sm:px-8 min-h-[calc(100vh-80px)] bg-[#0f0f1a] text-white">
       <h1 className="text-3xl font-bold text-white mb-6">Configurações de Notificação de Boost</h1>
       <p className="text-gray-400 mb-8">
         Selecione os jogos e tipos de serviço para os quais você deseja receber notificações de novos pedidos de boost.
       </p>
-
-      {/* Contêiner principal para a lista de jogos - Estilo Eldorado.gg */}
       <div className="bg-[#1a1a1a] border border-gray-700 rounded-lg overflow-hidden">
         {AVAILABLE_BOOST_OPTIONS.map(gameOption => {
-          // Calcula quantos tipos de boost estão inscritos para este jogo
           const subscribedCount = gameOption.types.filter(type => userPreferences[`${gameOption.game}-${type}`]).length;
           const totalTypes = gameOption.types.length;
           const subscriptionStatus = subscribedCount > 0
             ? `Subscribed ${subscribedCount}/${totalTypes}`
             : 'Not subscribed';
-
           const iconNumber = GAME_ICON_MAP[gameOption.game];
-          const iconUrl = iconNumber ? `${ICON_BASE_URL}${iconNumber}.png?w=28` : 'https://placehold.co/28x28/4B5563/FFFFFF?text=?'; // Fallback icon
+          const iconUrl = iconNumber ? `${ICON_BASE_URL}${iconNumber}.png?w=28` : 'https://placehold.co/28x28/4B5563/FFFFFF?text=?';
 
           return (
-            // Item individual do jogo - Estilo Eldorado.gg
             <div key={gameOption.game} className="bg-[#242424] border-b border-gray-800 last:border-b-0">
               <div
                 className="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-[#2c2c2c] transition-colors duration-200"
                 onClick={() => toggleGameExpansion(gameOption.game)}
               >
                 <div className="flex items-center gap-4 flex-grow">
-                  {/* Ícone do jogo */}
                   <Image
                     src={iconUrl}
                     alt={`${gameOption.game} icon`}
@@ -292,8 +263,6 @@ export default function BoosterNotificationSettingsPage() { // Renomeado para re
                   </span>
                 </div>
               </div>
-
-              {/* Submenu de tipos de boost, visível apenas se o jogo estiver expandido */}
               {expandedGames[gameOption.game] && (
                 <div className="px-8 pb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

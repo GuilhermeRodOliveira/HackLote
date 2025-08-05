@@ -20,7 +20,7 @@ interface JwtUserPayload {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    
+
     const searchTerm = searchParams.get('search');
     const category = searchParams.get('category');
     const game = searchParams.get('game');
@@ -29,27 +29,23 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.ListingWhereInput = {};
 
-    // Aplica filtro de busca por termo
     if (searchTerm) {
       where.OR = [
         // @ts-ignore
-        { title: { contains: searchTerm, mode: 'insensitive' } }, 
+        { title: { contains: searchTerm, mode: 'insensitive' } },
         // @ts-ignore
         { description: { contains: searchTerm, mode: 'insensitive' } },
       ];
     }
 
-    // Aplica filtro por categoria
     if (category) {
       where.category = category;
     }
 
-    // Aplica filtro por jogo
     if (game) {
       where.game = game;
     }
 
-    // Aplica filtro por preço
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) {
@@ -78,7 +74,25 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ listings }, { status: 200 });
+    // ##################################################################
+    // ## ALTERAÇÃO AQUI: PARSE O JSON DE `imageUrls` para um array. ##
+    // ##################################################################
+    const listingsWithParsedImages = listings.map(listing => {
+      // Cria uma cópia da listagem para evitar mutação direta
+      const parsedListing = { ...listing };
+      try {
+        // Se imageUrls existir, tenta fazer o parse do JSON
+        // Retorna null ou um array de strings
+        parsedListing.imageUrls = listing.imageUrls ? JSON.parse(listing.imageUrls) : null;
+      } catch (e) {
+        console.error(`Erro ao fazer parse do JSON para a listagem ${listing.id}:`, e);
+        // Em caso de erro, define como null para evitar quebra do front-end
+        parsedListing.imageUrls = null;
+      }
+      return parsedListing;
+    });
+
+    return NextResponse.json({ listings: listingsWithParsedImages }, { status: 200 });
 
   } catch (error) {
     console.error('Erro ao buscar listagens:', error);
@@ -90,13 +104,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   console.log('API de Listagens (POST): Requisição recebida.');
   try {
-    // 1. Verificar JWT_SECRET
     if (!JWT_SECRET) {
       console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
-    // 2. Autenticar Usuário e Obter sellerId do Token JWT
     const tokenCookie = req.cookies.get('token');
     if (!tokenCookie || !tokenCookie.value) {
       console.log('Nenhum token encontrado. Retornando 401.');
@@ -114,7 +126,6 @@ export async function POST(req: NextRequest) {
 
     const sellerId = decodedToken.id;
 
-    // 3. Obter os dados do formulário usando req.formData()
     const formData = await req.formData();
 
     const title = formData.get('title') as string;
@@ -124,7 +135,6 @@ export async function POST(req: NextRequest) {
     const game = formData.get('game') as string;
     const gameLogoUrl = formData.get('gameLogoUrl') as string | null;
 
-    // Validação de campos obrigatórios
     if (!title || !description || !priceStr || !category || !game) {
       console.error('Dados de listagem inválidos. Campos obrigatórios ausentes.');
       return NextResponse.json({ error: 'Por favor, preencha todos os campos obrigatórios.' }, { status: 400 });
@@ -135,7 +145,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Preço inválido.' }, { status: 400 });
     }
 
-    // Array para armazenar todos os URLs das imagens
     const imageUrls: string[] = [];
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -143,10 +152,6 @@ export async function POST(req: NextRequest) {
 
     let hasUploadedFiles = false;
 
-    // Itera sobre todos os arquivos que começam com 'images['
-    // Use `getAll` para pegar todos os arquivos com o mesmo nome (se o navegador enviar assim)
-    // ou itere sobre `entries()` como fizemos antes. O `ListingForm` envia como `images[0]`, `images[1]`
-    // então a iteração por `entries()` é a correta.
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('images[') && value instanceof File && value.size > 0) {
         hasUploadedFiles = true;
@@ -170,16 +175,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Se nenhuma imagem foi uploaded, e um gameLogoUrl foi fornecido, use-o como a primeira imagem
     if (!hasUploadedFiles && gameLogoUrl) {
       imageUrls.push(gameLogoUrl);
       console.log('Usando logo do jogo como imagem de fallback:', gameLogoUrl);
     }
 
-    // Validação final de imagem (se não houver imagens enviadas E não houver logo de jogo)
     if (imageUrls.length === 0) {
       return NextResponse.json({ error: 'Por favor, selecione pelo menos uma imagem ou escolha um jogo com logo disponível.' }, { status: 400 });
     }
+
+    // ################################################################
+    // ## ALTERAÇÃO AQUI: CONVERTE O ARRAY DE URLS PARA STRING JSON. ##
+    // ################################################################
+    const imageUrlsAsJson = JSON.stringify(imageUrls);
 
     const newList = await prisma.listing.create({
       data: {
@@ -188,7 +196,7 @@ export async function POST(req: NextRequest) {
         price: price,
         category: category,
         game: game,
-        imageUrls: imageUrls, // ATUALIZADO: Usando o array de URLs
+        imageUrls: imageUrlsAsJson, // Agora passamos a string JSON
         sellerId: sellerId,
       },
     });
@@ -199,14 +207,9 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('ERRO GERAL ao criar listagem:', error);
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-        return NextResponse.json({ error: 'Erro de validação: ID do vendedor não encontrado ou inválido.' }, { status: 400 });
+      return NextResponse.json({ error: 'Erro de validação: ID do vendedor não encontrado ou inválido.' }, { status: 400 });
     }
-    // A validação de tamanho de arquivo já é feita dentro do loop.
-    // Esta parte pode precisar de ajuste dependendo de como o erro é propagado se vários arquivos falharem.
-    // if (error instanceof Error && error.message.includes('maxFileSize exceeded')) {
-    //     return NextResponse.json({ error: 'Um dos arquivos de imagem é muito grande (máx. 5MB).' }, { status: 413 });
-    // }
-    
+
     return NextResponse.json({ error: 'Erro interno no servidor ao criar listagem.' }, { status: 500 });
   }
 }
