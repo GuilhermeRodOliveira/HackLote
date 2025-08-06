@@ -24,7 +24,7 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
     console.log('Tentando conectar ao WebSocket...');
 
     // A URL deve ser a mesma onde o seu servidor customizado está rodando
-    const newSocket = io('http://localhost:3000'); 
+    const newSocket = io('http://localhost:3000/'); 
     setSocket(newSocket);
 
     // Evento de conexão (útil para debug)

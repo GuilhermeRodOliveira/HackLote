@@ -1,4 +1,4 @@
-// src/app/api/boostbid/route.ts
+// src/app/api/boostbid/route.ts (CORRIGIDO)
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/utils/prisma';
 import jwt from 'jsonwebtoken';
@@ -13,7 +13,7 @@ interface JwtUserPayload {
   exp: number;
 }
 
-// Endpoint POST para criar um novo lance
+// Endpoint POST para criar um novo lance e um chat temporário
 export async function POST(req: NextRequest) {
   console.log('API de Lances (POST): Requisição para criar novo lance recebida.');
   try {
@@ -49,16 +49,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Preço inválido.' }, { status: 400 });
     }
 
-    // 1. Verificar se o pedido existe e pegar o ID do cliente
+    // 1. Verificar se o pedido existe e pegar o ID do cliente e detalhes
     const boostRequest = await prisma.boostRequest.findUnique({
       where: { id: boostRequestId },
-      select: { userId: true },
+      select: { userId: true, game: true, currentRank: true, desiredRank: true }, // Adicionando os detalhes do pedido
     });
 
     if (!boostRequest) {
       return NextResponse.json({ error: 'Pedido de boost não encontrado.' }, { status: 404 });
     }
-
     const clientUserId = boostRequest.userId;
 
     // 2. Verificar se o booster já fez um lance para este pedido
@@ -73,62 +72,58 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Você já fez um lance para este pedido.' }, { status: 409 });
     }
 
-    // 3. Criar o lance no banco de dados
+    // 3. Criar o lance no banco de dados e conectar ao chat que será criado
     const newBid = await prisma.boostBid.create({
       data: {
         boosterId,
         boostRequestId,
         amount: parsedAmount,
         estimatedTime,
+        status: 'PENDING', // Opcional, se você adicionou o campo status no Bid
       },
     });
 
     // 4. LÓGICA DE CRIAÇÃO DO CHAT TEMPORÁRIO
-    // CORRIGIDO: Consulta para encontrar um chat que tem ambos os participantes
-    const existingChat = await prisma.chat.findFirst({
-      where: {
-        boostRequestId: boostRequestId,
-        AND: [
-          {
-            participants: {
-              some: { userId: clientUserId },
-            },
-          },
-          {
-            participants: {
-              some: { userId: boosterId },
-            },
-          },
-        ],
+    // Agora o chat é criado sempre que um novo lance é feito.
+    const newChat = await prisma.chat.create({
+      data: {
+        status: 'PENDING_BID',
+        boostBid: {
+          connect: { id: newBid.id },
+        },
+        participants: {
+          create: [
+            { userId: clientUserId },
+            { userId: boosterId },
+          ],
+        },
       },
-      select: { id: true },
     });
 
-    if (!existingChat) {
-      await prisma.chat.create({
-        data: {
-          boostRequestId: boostRequestId,
-          status: 'PENDING_BID',
-          participants: {
-            create: [
-              { userId: clientUserId },
-              { userId: boosterId },
-            ],
-          },
-          messages: {
-            create: {
-              senderId: boosterId,
-              text: `Olá! Fiz um lance de R$${parsedAmount} para o seu pedido. Podemos conversar sobre os detalhes aqui.`,
-            },
-          },
-        },
-      });
-    }
+    // 5. Adicionar a mensagem inicial ao chat
+    const initialMessageContent = `Boosting Request chat started:
+Boosting request ID: ${boostRequestId}
+Game: ${boostRequest.game}
+Current Rank: ${boostRequest.currentRank}
+Desired Rank: ${boostRequest.desiredRank}`;
 
-    return NextResponse.json({ message: 'Lance criado com sucesso!', bid: newBid }, { status: 201 });
+    await prisma.message.create({
+      data: {
+        chatId: newChat.id,
+        senderId: boosterId, // O booster é quem inicia o chat
+        text: initialMessageContent,
+      },
+    });
+
+    // 6. Retornar a resposta com o novo lance e o ID do chat criado
+    return NextResponse.json({ 
+      message: 'Lance e chat criados com sucesso!',
+      bid: newBid,
+      chatId: newChat.id,
+    }, { status: 201 });
 
   } catch (error) {
-    console.error('ERRO GERAL ao criar lance:', error);
+    console.error('ERRO GERAL ao criar lance e chat:', error);
     return NextResponse.json({ error: 'Erro interno no servidor ao criar lance.' }, { status: 500 });
   }
 }

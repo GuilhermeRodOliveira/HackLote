@@ -30,8 +30,10 @@ function generateVerificationCode(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('--- Início da requisição de REGISTRO ---');
+
     if (!JWT_SECRET) {
-      console.error('JWT_SECRET não está definido nas variáveis de ambiente.');
+      console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
@@ -87,13 +89,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Hash da senha
+    console.log('Fazendo hash da senha...');
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('Senha hashed com sucesso.');
 
     // 7. Gera e Salva o Código de Verificação e os Dados Temporários (upsert)
     const verificationCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Código expira em 10 minutos
 
-    console.log('Dados para upsert em VerificationCode:', { email, verificationCode, expiresAt, nome, usuario, hashedPassword });
+    console.log('Dados para upsert em VerificationCode:', { email, verificationCode, expiresAt, nome, usuario, hashedPassword: '[HASHED_PASSWORD]' }); // Não logar a senha hashed completa
 
     try {
       const upsertResult = await prisma.verificationCode.upsert({
@@ -114,7 +118,7 @@ export async function POST(req: NextRequest) {
           hashedPassword: hashedPassword,
         },
       });
-      console.log('Resultado do upsert em VerificationCode:', upsertResult);
+      console.log('Resultado do upsert em VerificationCode:', upsertResult.id ? 'Sucesso' : 'Falha'); // Log mais conciso
 
     } catch (dbError: any) {
       console.error('Erro no Prisma ao salvar VerificationCode:', dbError);
@@ -122,6 +126,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 8. Envia o e-mail de verificação (chamando o endpoint send-verification-email)
+    console.log('Chamando endpoint de envio de e-mail de verificação...');
     const sendEmailRes = await fetch(`${req.nextUrl.origin}/api/send-verification-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,6 +138,7 @@ export async function POST(req: NextRequest) {
         console.error('Falha ao chamar o endpoint de envio de e-mail. Detalhes:', errorDetails);
         return NextResponse.json({ error: 'Erro ao enviar o código de verificação. Tente novamente.' }, { status: 500 });
     }
+    console.log('Endpoint de envio de e-mail chamado com sucesso.');
 
     // Retorna sucesso, informando que o código foi enviado para verificação
     return NextResponse.json({
@@ -143,5 +149,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Erro geral no processo de registro (enviar código):', error);
     return NextResponse.json({ error: 'Erro interno no servidor ao iniciar o registro.' }, { status: 500 });
+  } finally {
+    console.log('--- Fim da requisição de REGISTRO ---');
   }
 }

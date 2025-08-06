@@ -74,19 +74,12 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // ##################################################################
-    // ## ALTERAÇÃO AQUI: PARSE O JSON DE `imageUrls` para um array. ##
-    // ##################################################################
     const listingsWithParsedImages = listings.map(listing => {
-      // Cria uma cópia da listagem para evitar mutação direta
       const parsedListing = { ...listing };
       try {
-        // Se imageUrls existir, tenta fazer o parse do JSON
-        // Retorna null ou um array de strings
         parsedListing.imageUrls = listing.imageUrls ? JSON.parse(listing.imageUrls) : null;
       } catch (e) {
         console.error(`Erro ao fazer parse do JSON para a listagem ${listing.id}:`, e);
-        // Em caso de erro, define como null para evitar quebra do front-end
         parsedListing.imageUrls = null;
       }
       return parsedListing;
@@ -184,9 +177,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Por favor, selecione pelo menos uma imagem ou escolha um jogo com logo disponível.' }, { status: 400 });
     }
 
-    // ################################################################
-    // ## ALTERAÇÃO AQUI: CONVERTE O ARRAY DE URLS PARA STRING JSON. ##
-    // ################################################################
     const imageUrlsAsJson = JSON.stringify(imageUrls);
 
     const newList = await prisma.listing.create({
@@ -196,7 +186,7 @@ export async function POST(req: NextRequest) {
         price: price,
         category: category,
         game: game,
-        imageUrls: imageUrlsAsJson, // Agora passamos a string JSON
+        imageUrls: imageUrlsAsJson,
         sellerId: sellerId,
       },
     });

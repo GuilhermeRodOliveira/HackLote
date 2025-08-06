@@ -1,190 +1,79 @@
-// src/app/api/boostbid/[id]/route.ts
+// src/app/api/boost/accept-bid/route.ts (CORRIGIDO)
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/utils/prisma'; // Caminho corrigido
+import { prisma } from '@/utils/prisma';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
 interface JwtUserPayload {
   id: string;
-  usuario?: string;
-  email: string;
-  iat: number;
-  exp: number;
 }
 
-// Endpoint GET para buscar um único lance pelo ID
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json({ error: 'ID do lance não fornecido.' }, { status: 400 });
-    }
-
-    const bid = await prisma.boostBid.findUnique({
-      where: { id: id },
-      include: {
-        booster: {
-          select: {
-            id: true,
-            usuario: true,
-            nome: true,
-            email: true,
-          },
-        },
-        boostRequest: {
-          select: {
-            id: true,
-            game: true,
-            userId: true,
-          },
-        },
-      },
-    });
-
-    if (!bid) {
-      return NextResponse.json({ error: 'Lance não encontrado.' }, { status: 404 });
-    }
-
-    return NextResponse.json({ bid }, { status: 200 });
-  } catch (error) {
-    console.error('Erro ao buscar lance:', error);
-    return NextResponse.json({ error: 'Erro interno no servidor ao buscar lance.' }, { status: 500 });
-  }
-}
-
-// Endpoint PUT para atualizar um lance existente
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  console.log('API de Lances (PUT): Requisição de atualização recebida.');
+export async function POST(req: NextRequest) {
   try {
     if (!JWT_SECRET) {
-      console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
-    const { id: bidId } = params;
-
     const tokenCookie = req.cookies.get('token');
     if (!tokenCookie || !tokenCookie.value) {
-      return NextResponse.json({ error: 'Não autenticado para editar lance.' }, { status: 401 });
+      return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
     }
 
-    let decodedToken: JwtUserPayload;
-    try {
-      decodedToken = jwt.verify(tokenCookie.value, JWT_SECRET) as JwtUserPayload;
-    } catch (jwtError) {
-      console.error('ERRO: Erro ao verificar token JWT para editar lance:', jwtError);
-      return NextResponse.json({ error: 'Token inválido ou expirado para editar lance.' }, { status: 401 });
-    }
-
-    const boosterId = decodedToken.id;
+    const decodedToken = jwt.verify(tokenCookie.value, JWT_SECRET) as JwtUserPayload;
+    const currentUserId = decodedToken.id;
 
     const body = await req.json();
-    const { amount, estimatedTime } = body;
+    const { bidId, requestId } = body;
 
-    const existingBid = await prisma.boostBid.findUnique({
-      where: { id: bidId },
+    const boostRequest = await prisma.boostRequest.findUnique({
+      where: { id: requestId },
     });
 
-    if (!existingBid) {
-      return NextResponse.json({ error: 'Lance não encontrado para edição.' }, { status: 404 });
+    if (!boostRequest || boostRequest.userId !== currentUserId) {
+      return NextResponse.json({ error: 'Não autorizado a aceitar este lance.' }, { status: 403 });
     }
 
-    if (existingBid.boosterId !== boosterId) {
-      return NextResponse.json({ error: 'Você não tem permissão para editar este lance.' }, { status: 403 });
-    }
-
-    if (!amount || !estimatedTime) {
-      return NextResponse.json({ error: 'Preço e Tempo Estimado são obrigatórios.' }, { status: 400 });
-    }
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      return NextResponse.json({ error: 'Preço inválido.' }, { status: 400 });
-    }
-
-    const updatedBid = await prisma.boostBid.update({
-      where: { id: bidId },
+    // 1. Atualizar o BoostRequest para refletir o lance aceito
+    const updatedRequest = await prisma.boostRequest.update({
+      where: { id: requestId },
       data: {
-        amount: parsedAmount,
-        estimatedTime: estimatedTime,
+        acceptedBidId: bidId,
       },
     });
 
-    console.log('Lance atualizado com sucesso:', updatedBid.id);
-    return NextResponse.json({ message: 'Lance atualizado com sucesso!', bid: updatedBid }, { status: 200 });
+    // 2. Fechar todos os outros chats de lances não aceitos
+    const allBidsForRequest = await prisma.boostBid.findMany({
+      where: { boostRequestId: requestId },
+      include: { chat: true },
+    });
 
-  } catch (error) {
-    console.error('ERRO GERAL ao editar lance:', error);
-    return NextResponse.json({ error: 'Erro interno no servidor ao editar lance.' }, { status: 500 });
-  }
-}
-
-// Endpoint DELETE para excluir um lance existente
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  console.log('API de Lances (DELETE): Requisição de exclusão recebida.');
-  try {
-    if (!JWT_SECRET) {
-      console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
-      return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
-    }
-
-    const { id: bidId } = params;
-
-    const tokenCookie = req.cookies.get('token');
-    if (!tokenCookie || !tokenCookie.value) {
-      return NextResponse.json({ error: 'Não autenticado para excluir lance.' }, { status: 401 });
-    }
-
-    let decodedToken: JwtUserPayload;
-    try {
-      decodedToken = jwt.verify(tokenCookie.value, JWT_SECRET) as JwtUserPayload;
-    } catch (jwtError) {
-      console.error('ERRO: Erro ao verificar token JWT para excluir lance:', jwtError);
-      return NextResponse.json({ error: 'Token inválido ou expirado para excluir lance.' }, { status: 401 });
-    }
-
-    const boosterId = decodedToken.id;
-
-    const existingBid = await prisma.boostBid.findUnique({
-      where: { id: bidId },
-      include: {
-        boostRequest: {
-          select: { acceptedBidId: true }
-        }
+    for (const bid of allBidsForRequest) {
+      if (bid.chat && bid.id !== bidId) {
+        await prisma.chat.update({
+          where: { id: bid.chat.id },
+          data: { status: 'CLOSED' },
+        });
       }
-    });
-
-    if (!existingBid) {
-      return NextResponse.json({ error: 'Lance não encontrado para exclusão.' }, { status: 404 });
     }
 
-    if (existingBid.boosterId !== boosterId) {
-      return NextResponse.json({ error: 'Você não tem permissão para excluir este lance.' }, { status: 403 });
-    }
-
-    if (existingBid.boostRequest?.acceptedBidId === bidId) {
-        return NextResponse.json({ error: 'Não é possível excluir um lance que já foi aceito.' }, { status: 400 });
-    }
-
-    await prisma.boostBid.delete({
+    // 3. Mudar o status do chat aceito para 'ACTIVE'
+    const acceptedBidChat = await prisma.boostBid.findUnique({
       where: { id: bidId },
+      select: { chat: true },
     });
 
-    console.log('Lance excluído com sucesso:', bidId);
-    return NextResponse.json({ message: 'Lance excluído com sucesso!' }, { status: 200 });
+    if (acceptedBidChat?.chat) {
+      await prisma.chat.update({
+        where: { id: acceptedBidChat.chat.id },
+        data: { status: 'ACTIVE' },
+      });
+    }
+
+    return NextResponse.json({ message: 'Lance aceito com sucesso.', chatId: acceptedBidChat?.chat?.id }, { status: 200 });
 
   } catch (error) {
-    console.error('ERRO GERAL ao excluir lance:', error);
-    return NextResponse.json({ error: 'Erro interno no servidor ao excluir lance.' }, { status: 500 });
+    console.error('Erro ao aceitar lance:', error);
+    return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }

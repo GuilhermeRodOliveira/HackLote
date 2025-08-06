@@ -60,14 +60,14 @@ export async function GET(request: NextRequest) {
         receiveMarketingEmails: true,
         receiveOrderUpdates: true,
         receiveMessageNotifications: true,
-        receiveInAppNotifications: true,
+        // receiveInAppNotifications: true, // Removido: Campo não existe no modelo Prisma
         isProfilePublic: true,
         isActivityPublic: true,
         preferredLanguage: true,
         theme: true,
         preferredCurrency: true,
         hasChangedUsername: true,
-        usernameLastChangedAt: true, // Incluir o novo campo aqui
+        usernameLastChangedAt: true,
       },
     });
 
@@ -97,7 +97,8 @@ export async function PUT(request: NextRequest) {
 
     const updatableFields = [
       'nome', 'bio', 'country', // 'usuario' será tratado separadamente
-      'receiveMarketingEmails', 'receiveOrderUpdates', 'receiveMessageNotifications', 'receiveInAppNotifications',
+      'receiveMarketingEmails', 'receiveOrderUpdates', 'receiveMessageNotifications',
+      // 'receiveInAppNotifications', // Removido: Campo não existe no modelo Prisma
       'isProfilePublic', 'isActivityPublic',
       'preferredLanguage', 'theme', 'preferredCurrency'
     ];
@@ -238,14 +239,14 @@ export async function PUT(request: NextRequest) {
         receiveMarketingEmails: true,
         receiveOrderUpdates: true,
         receiveMessageNotifications: true,
-        receiveInAppNotifications: true,
+        // receiveInAppNotifications: true, // Removido: Campo não existe no modelo Prisma
         isProfilePublic: true,
         isActivityPublic: true,
         preferredLanguage: true,
         theme: true,
         preferredCurrency: true,
         hasChangedUsername: true,
-        usernameLastChangedAt: true, // Incluir o novo campo no retorno
+        usernameLastChangedAt: true,
       },
     });
     console.log('API PUT /api/user/settings: Usuário atualizado com sucesso no Prisma.');

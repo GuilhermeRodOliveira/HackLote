@@ -1,105 +1,119 @@
 // src/app/api/listings/[id]/route.ts
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '../../../../utils/prisma';
-import { z } from 'zod';
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
+import { promises as fs } from 'fs';
+import path from 'path';
 
-const listingUpdateSchema = z.object({
-  title: z.string().optional(),
-  description: z.string().optional(),
-  price: z.number().optional(),
-  imageUrls: z.string().optional(),
-  category: z.string().optional(),
-  subCategory: z.string().optional(),
-  attributes: z.any().optional(),
-  game: z.string().optional(),
-});
+const JWT_SECRET = process.env.JWT_SECRET;
 
-interface Listing {
+interface JwtUserPayload {
   id: string;
-  title: string;
-  description: string;
-  price: number;
-  imageUrls?: string;
 }
 
-// SIMULAÇÃO DE BANCO DE DADOS: Agora com o formato de URL corrigido
-let mockListings: Listing[] = [
-  { 
-    id: 'cmltsl2r0007peo9bgtznee', 
-    title: 'Conta de Exemplo', 
-    description: 'Uma conta de exemplo.', 
-    price: 50.0, 
-    imageUrls: '/img/lol.png,/img/valorant.png' // URLs separadas por vírgula e com barra inicial
-  },
-  { 
-    id: '1', 
-    title: 'Outro Item', 
-    description: 'Outro item para teste', 
-    price: 22.0, 
-    imageUrls: '/img/rocketleague.png' 
-  },
-];
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID da listagem não fornecido.' }, { status: 400 });
-  }
+// Handler GET para buscar uma listagem específica por ID
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const listingId = params.id;
 
   try {
     const listing = await prisma.listing.findUnique({
-      where: { id: id },
+      where: { id: listingId },
       include: {
         seller: {
           select: {
             id: true,
             usuario: true,
             email: true,
+            nome: true,
           },
         },
       },
     });
 
     if (!listing) {
-      const mockListing = mockListings.find(l => l.id === id);
-      if (mockListing) {
-        return NextResponse.json(mockListing);
-      }
       return NextResponse.json({ error: 'Listagem não encontrada.' }, { status: 404 });
     }
 
-    return NextResponse.json(listing);
+    const parsedListing = { ...listing };
+    try {
+      parsedListing.imageUrls = listing.imageUrls ? JSON.parse(listing.imageUrls) : null;
+    } catch (e) {
+      console.error(`Erro ao fazer parse do JSON para a listagem ${listing.id}:`, e);
+      parsedListing.imageUrls = null;
+    }
+    
+    return NextResponse.json(parsedListing, { status: 200 });
+
   } catch (error) {
-    console.error('Erro ao buscar listagem:', error);
+    console.error('Erro ao buscar a listagem:', error);
     return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
-  const body = await request.json();
+// Handler DELETE para excluir uma listagem específica por ID
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const listingId = params.id;
 
-  const validation = listingUpdateSchema.safeParse(body);
-  if (!validation.success) {
-    return NextResponse.json({ error: 'Dados inválidos.', details: validation.error.issues }, { status: 400 });
+  if (!JWT_SECRET) {
+    console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
+    return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
   }
 
+  const cookieStore = cookies();
+  const token = (await cookieStore).get('token'); // Alteração corrigida aqui
+
+  if (!token || !token.value) {
+    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
+  }
+
+  let decodedToken: JwtUserPayload;
   try {
-    const updatedListing = await prisma.listing.update({
-      where: { id: id },
-      data: validation.data,
+    decodedToken = jwt.verify(token.value, JWT_SECRET) as JwtUserPayload;
+  } catch (jwtError) {
+    return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 401 });
+  }
+
+  const userId = decodedToken.id;
+
+  try {
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      select: {
+        sellerId: true,
+        imageUrls: true,
+      },
     });
 
-    return NextResponse.json({ message: 'Listagem atualizada com sucesso!', listing: updatedListing });
+    if (!listing) {
+      return NextResponse.json({ error: 'Listagem não encontrada.' }, { status: 404 });
+    }
+
+    if (listing.sellerId !== userId) {
+      return NextResponse.json({ error: 'Você não tem permissão para excluir esta listagem.' }, { status: 403 });
+    }
+
+    try {
+      if (listing.imageUrls) {
+        const imageUrlsArray = JSON.parse(listing.imageUrls);
+        const uploadDir = path.join(process.cwd(), 'public');
+        for (const imageUrl of imageUrlsArray) {
+          const filePath = path.join(uploadDir, imageUrl);
+          await fs.unlink(filePath).catch(e => console.error(`Falha ao excluir arquivo ${filePath}:`, e));
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao tentar excluir arquivos de imagem:', e);
+    }
+    
+    await prisma.listing.delete({
+      where: { id: listingId },
+    });
+
+    return NextResponse.json({ message: 'Listagem excluída com sucesso.' }, { status: 200 });
+
   } catch (error) {
-    console.error('Erro ao atualizar listagem:', error);
-    return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
+    console.error('ERRO GERAL ao deletar a listagem:', error);
+    return NextResponse.json({ error: 'Erro interno do servidor ao deletar a listagem.' }, { status: 500 });
   }
 }

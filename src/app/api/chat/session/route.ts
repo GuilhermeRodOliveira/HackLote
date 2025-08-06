@@ -1,116 +1,151 @@
-// src/app/api/chat/session/route.ts
+// src/app/api/chat/session/route.ts (CORRIGIDO NOVAMENTE)
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '../../../../utils/prisma'; // Caminho CORRETO para src/utils/prisma
+import { prisma } from '../../../../utils/prisma';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
 interface JwtUserPayload {
   id: string;
-  usuario?: string;
   email: string;
-  iat: number;
-  exp: number;
 }
 
 // GET: Obter todas as sessões de chat de um usuário logado
 export async function GET(req: NextRequest) {
-  console.log('API de Sessão de Chat (GET): Requisição recebida.');
   try {
     if (!JWT_SECRET) {
-      console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
-    // Autenticar Usuário
     const tokenCookie = req.cookies.get('token');
     if (!tokenCookie || !tokenCookie.value) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
     }
+
     let decodedToken: JwtUserPayload;
     try {
       decodedToken = jwt.verify(tokenCookie.value, JWT_SECRET) as JwtUserPayload;
     } catch (jwtError) {
-      console.error('Erro ao verificar token JWT para listar chats:', jwtError);
       return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 401 });
     }
     const currentUserId = decodedToken.id;
 
-    // Buscar todas as sessões de chat onde o usuário logado é participante1 ou participante2
-    const chatSessions = await prisma.chatSession.findMany({ // ESTA LINHA SÓ FUNCIONARÁ COM PRISMA CLIENT ATUALIZADO
+    const chats = await prisma.chat.findMany({
       where: {
-        OR: [
-          { participant1Id: currentUserId },
-          { participant2Id: currentUserId },
-        ],
-        status: 'OPEN', // Apenas sessões de chat abertas
+        participants: {
+          some: {
+            userId: currentUserId,
+          },
+        },
+        status: {
+          in: ['PENDING_BID', 'ACTIVE'],
+        },
       },
       include: {
-        participant1: { select: { id: true, usuario: true, nome: true, profilePictureUrl: true } },
-        participant2: { select: { id: true, usuario: true, nome: true, profilePictureUrl: true } },
-        boostRequest: { select: { id: true, game: true, currentRank: true, desiredRank: true } }, // Inclui detalhes do pedido
+        participants: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                usuario: true,
+                nome: true,
+                profilePictureUrl: true,
+              },
+            },
+          },
+        },
         messages: {
-          take: 1, // Pega apenas a última mensagem para pré-visualização (opcional)
+          take: 1,
           orderBy: { createdAt: 'desc' },
           include: { sender: { select: { id: true, usuario: true, nome: true } } },
         },
+        // O `include` para `boostBid` está correto
+        boostBid: {
+          select: {
+            boostRequest: {
+              select: {
+                id: true,
+                game: true,
+                currentRank: true,
+                desiredRank: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        updatedAt: 'desc', // Ordena pelas sessões mais recentes (com base na última atualização/mensagem)
+        updatedAt: 'desc',
       },
     });
 
-    console.log(`Sessões de chat encontradas para o usuário ${currentUserId}: ${chatSessions.length}`);
-    return NextResponse.json({ chatSessions }, { status: 200 });
+    return NextResponse.json({ chats }, { status: 200 });
 
   } catch (error) {
-    console.error('Erro ao listar sessões de chat:', error);
-    return NextResponse.json({ error: 'Erro interno no servidor ao listar sessões de chat.' }, { status: 500 });
+    console.error('Erro ao listar chats:', error);
+    return NextResponse.json({ error: 'Erro interno no servidor ao listar chats.' }, { status: 500 });
   }
 }
 
-
-// POST: Criar ou Obter uma Sessão de Chat (código existente)
+// POST: Criar ou Obter uma Sessão de Chat (agora por bid)
 export async function POST(req: NextRequest) {
-  console.log('API de Sessão de Chat (POST): Requisição recebida.');
   try {
     if (!JWT_SECRET) {
-      console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
-    // Autenticar Usuário
     const tokenCookie = req.cookies.get('token');
     if (!tokenCookie || !tokenCookie.value) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
     }
+
     let decodedToken: JwtUserPayload;
     try {
       decodedToken = jwt.verify(tokenCookie.value, JWT_SECRET) as JwtUserPayload;
     } catch (jwtError) {
-      console.error('Erro ao verificar token JWT para chat:', jwtError);
       return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 401 });
     }
     const currentUserId = decodedToken.id;
 
     const body = await req.json();
-    const { boostRequestId, participant1Id, participant2Id } = body;
+    const { boostBidId } = body;
 
-    if (!boostRequestId || !participant1Id || !participant2Id) {
-      return NextResponse.json({ error: 'ID do pedido de boost e IDs dos participantes são obrigatórios.' }, { status: 400 });
+    if (!boostBidId) {
+      return NextResponse.json({ error: 'ID do lance de boost é obrigatório.' }, { status: 400 });
     }
 
-    // Verificar se o usuário logado é um dos participantes
+    const boostBid = await prisma.boostBid.findUnique({
+      where: { id: boostBidId },
+      include: { boostRequest: { select: { userId: true, id: true, game: true, currentRank: true, desiredRank: true } } },
+    });
+
+    if (!boostBid) {
+      return NextResponse.json({ error: 'Lance não encontrado.' }, { status: 404 });
+    }
+
+    const participant1Id = boostBid.boostRequest.userId;
+    const participant2Id = boostBid.boosterId;
+
     if (currentUserId !== participant1Id && currentUserId !== participant2Id) {
       return NextResponse.json({ error: 'Não autorizado a acessar este chat.' }, { status: 403 });
     }
 
-    // Buscar ou criar a sessão de chat
-    let chatSession = await prisma.chatSession.findUnique({ // ESTA LINHA SÓ FUNCIONARÁ COM PRISMA CLIENT ATUALIZADO
-      where: { boostRequestId: boostRequestId },
+    // CORREÇÃO: `boostBidId` não é um campo direto em Chat, é uma relação. 
+    // Para buscar um chat pelo `boostBidId`, a query deve ser aninhada.
+    // Usando `findFirst` com uma cláusula `where` que acessa a relação `boostBid`.
+    let chat = await prisma.chat.findFirst({
+      where: {
+        boostBid: {
+          id: boostBidId,
+        },
+      },
       include: {
-        participant1: { select: { id: true, usuario: true, nome: true, email: true, profilePictureUrl: true } },
-        participant2: { select: { id: true, usuario: true, nome: true, email: true, profilePictureUrl: true } },
+        participants: {
+          select: {
+            user: {
+              select: { id: true, usuario: true, nome: true, email: true, profilePictureUrl: true },
+            },
+          },
+        },
         messages: {
           orderBy: { createdAt: 'asc' },
           include: { sender: { select: { id: true, usuario: true, nome: true, profilePictureUrl: true } } },
@@ -118,38 +153,60 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (!chatSession) {
-      // Criar nova sessão de chat se não existir
-      chatSession = await prisma.chatSession.create({
+    if (!chat) {
+      chat = await prisma.chat.create({
         data: {
-          boostRequestId: boostRequestId,
-          participant1Id: participant1Id,
-          participant2Id: participant2Id,
-          status: 'OPEN', // Inicia como aberta
+          status: 'PENDING_BID',
+          boostBid: {
+            connect: { id: boostBidId },
+          },
+          participants: {
+            createMany: {
+              data: [
+                { userId: participant1Id },
+                { userId: participant2Id },
+              ],
+            },
+          },
         },
         include: {
-          participant1: { select: { id: true, usuario: true, nome: true, email: true, profilePictureUrl: true } },
-          participant2: { select: { id: true, usuario: true, nome: true, email: true, profilePictureUrl: true } },
+          participants: {
+            select: {
+              user: {
+                select: { id: true, usuario: true, nome: true, email: true, profilePictureUrl: true },
+              },
+            },
+          },
           messages: {
             orderBy: { createdAt: 'asc' },
             include: { sender: { select: { id: true, usuario: true, nome: true, profilePictureUrl: true } } },
           },
         },
       });
-      console.log('Nova sessão de chat criada:', chatSession.id);
-    } else {
-      console.log('Sessão de chat existente encontrada:', chatSession.id);
+
+      const initialMessageContent = `Boosting Request chat started:
+Boosting request ID: ${boostBid.boostRequest.id}
+Game: ${boostBid.boostRequest.game}
+Current Rank: ${boostBid.boostRequest.currentRank}
+Desired Rank: ${boostBid.boostRequest.desiredRank}`;
+
+      await prisma.message.create({
+        data: {
+          chatId: chat.id,
+          senderId: boostBid.boosterId,
+          text: initialMessageContent,
+        },
+      });
     }
 
-    // Verificar se a sessão está aberta
-    if (chatSession.status !== 'OPEN') {
-      return NextResponse.json({ error: 'Sessão de chat não está aberta.' }, { status: 400 });
+    if (chat.status === 'CLOSED') {
+      return NextResponse.json({ error: 'Esta sessão de chat foi encerrada.' }, { status: 400 });
     }
 
-    return NextResponse.json({ chatSession }, { status: 200 });
+    return NextResponse.json({ chat }, { status: 200 });
 
   } catch (error) {
-    console.error('Erro ao gerenciar sessão de chat:', error);
-    return NextResponse.json({ error: 'Erro interno no servidor ao gerenciar sessão de chat.' }, { status: 500 });
+    console.error('Erro ao gerenciar chat:', error);
+    return NextResponse.json({ error: 'Erro interno no servidor ao gerenciar chat.' }, { status: 500 });
   }
 }

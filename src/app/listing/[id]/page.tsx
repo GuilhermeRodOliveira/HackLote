@@ -17,7 +17,8 @@ interface Listing {
     price: number;
     category: string;
     subCategory?: string;
-    imageUrls?: string;
+    // O tipo de imageUrls agora é um array de strings ou null
+    imageUrls?: string[] | null; 
     attributes?: Record<string, any> | null;
     sellerId: string;
     seller: {
@@ -43,7 +44,8 @@ const ListingDetailsPage = () => {
 
     const currentUserId = currentUser?.id;
 
-    const imageUrlsArray = listing?.imageUrls ? listing.imageUrls.split(',').filter(Boolean) : [];
+    // Lógica corrigida para criar o array de URLs, já que a API agora retorna um array
+    const imageUrlsArray = Array.isArray(listing?.imageUrls) ? listing.imageUrls : [];
 
     useEffect(() => {
         if (!id) {
@@ -80,7 +82,7 @@ const ListingDetailsPage = () => {
 
     const handlePrevImage = () => {
         if (imageUrlsArray.length > 1) {
-            setCurrentImageIndex(prevIndex => 
+            setCurrentImageIndex(prevIndex =>
                 prevIndex === 0 ? imageUrlsArray.length - 1 : prevIndex - 1
             );
         }
@@ -88,7 +90,7 @@ const ListingDetailsPage = () => {
 
     const handleNextImage = () => {
         if (imageUrlsArray.length > 1) {
-            setCurrentImageIndex(prevIndex => 
+            setCurrentImageIndex(prevIndex =>
                 prevIndex === imageUrlsArray.length - 1 ? 0 : prevIndex + 1
             );
         }
@@ -307,7 +309,7 @@ const ListingDetailsPage = () => {
                                 {isSeller ? 'Você não pode comprar seu próprio anúncio' : (listing.stock > 0 ? 'Comprar Agora' : 'Fora de Estoque')}
                             </button>
                         </div>
-                        
+
                         <FeedbackSection listingId={listing.id} />
                     </div>
                 </div>

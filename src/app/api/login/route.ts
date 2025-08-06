@@ -1,7 +1,9 @@
+// src/app/api/login/route.ts
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '../../../utils/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers'; // Certifique-se de importar 'cookies' aqui
 
 const JWT_SECRET = process.env.JWT_SECRET; 
 
@@ -17,51 +19,57 @@ const LOCKOUT_DURATION_MINUTES = 15; // Duração do bloqueio em minutos
 
 export async function POST(req: Request) {
   try {
+    console.log('--- Início da requisição de LOGIN ---');
+
     if (!JWT_SECRET) {
-      console.error('JWT_SECRET não está definido nas variáveis de ambiente.');
+      console.error('ERRO: JWT_SECRET não está definido nas variáveis de ambiente.');
       return NextResponse.json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
     }
 
     const body = await req.json();
-    let { email, password } = body; // Usar 'let' para poder reatribuir
-
-    // NOVO: Converter o e-mail para minúsculas para garantir case-insensitivity
+    let { email, password } = body; 
     email = email.toLowerCase();
+
+    console.log(`Tentativa de login para o email: ${email}`);
 
     // 1. Validação de domínio de e-mail
     const emailDomain = email.split('@')[1];
     if (!emailDomain || !ALLOWED_EMAIL_DOMAINS.includes(emailDomain.toLowerCase())) {
+      console.log('Validação de domínio de e-mail falhou.');
       return NextResponse.json({ 
-        error: 'Email ou senha inválidos.' // Mensagem genérica
+        error: 'Email ou senha inválidos.' 
       }, { status: 400 });
     }
 
-    // 2. Validação de complexidade da senha (aplicada apenas se a senha for nova ou alterada, mas aqui é para login)
+    // 2. Validação de complexidade da senha (no login, isso geralmente não é feito, mas está no seu código)
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/\\|`~-]).{8,}$/;
-    
     if (!passwordRegex.test(password)) {
+      console.log('Validação de complexidade da senha falhou (no login).');
       return NextResponse.json({ 
-        error: 'Email ou senha inválidos.' // Mensagem genérica
+        error: 'Email ou senha inválidos.' 
       }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } }); // A busca agora é feita com o email em minúsculas
+    const user = await prisma.user.findUnique({ where: { email } }); 
 
     if (!user) {
-      return NextResponse.json({ error: 'Email ou senha inválidos.' }, { status: 401 }); // Mensagem genérica
+      console.log('Usuário não encontrado no banco de dados.');
+      return NextResponse.json({ error: 'Email ou senha inválidos.' }, { status: 401 });
     }
 
     // 3. Verificar status de bloqueio
     if (user.lockoutUntil && new Date() < user.lockoutUntil) {
       const remainingTime = Math.ceil((user.lockoutUntil.getTime() - new Date().getTime()) / (1000 * 60));
+      console.log(`Conta bloqueada para ${email}. Tempo restante: ${remainingTime} minutos.`);
       return NextResponse.json({ 
         error: `Sua conta está temporariamente bloqueada. Tente novamente em ${remainingTime} minutos.` 
-      }, { status: 429 }); // 429 Too Many Requests
+      }, { status: 429 });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
+      console.log('Senha incorreta.');
       // 4. Senha incorreta - Incrementar tentativas falhas
       const updatedUser = await prisma.user.update({
         where: { id: user.id },
@@ -97,6 +105,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: errorMessage }, { status: 401 });
 
     } else {
+      console.log('Senha correta. Login bem-sucedido.');
       // 5. Login bem-sucedido - Resetar tentativas falhas e desbloquear
       if (user.failedLoginAttempts > 0 || user.lockoutUntil) {
         await prisma.user.update({
@@ -106,6 +115,7 @@ export async function POST(req: Request) {
             lockoutUntil: null,
           },
         });
+        console.log('Tentativas de login resetadas e conta desbloqueada (se aplicável).');
       }
 
       // Cria payload com dados mínimos para o token
@@ -115,10 +125,10 @@ export async function POST(req: Request) {
         email: user.email,
       };
 
-      // Gera o JWT com validade, ex: 7 dias
+      console.log('Gerando JWT...');
       const token = jwt.sign(tokenPayload, JWT_SECRET as string, { expiresIn: '7d' });
+      console.log('JWT gerado com sucesso. Definindo cookie...');
 
-      // Retorna response com cookie HttpOnly
       const response = NextResponse.json({
         message: 'Login realizado com sucesso!',
         user: {
@@ -139,11 +149,14 @@ export async function POST(req: Request) {
         sameSite: 'lax', // Proteção contra CSRF
       });
 
+      console.log('Cookie de token definido na resposta.');
       return response;
     }
 
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.error('ERRO GERAL no login:', error);
     return NextResponse.json({ error: 'Erro interno no servidor.' }, { status: 500 });
+  } finally {
+    console.log('--- Fim da requisição de LOGIN ---');
   }
 }
